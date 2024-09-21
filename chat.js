@@ -16,6 +16,7 @@ template.innerHTML = /*html*/`
 			background-color: #f1f0e8;
 			box-sizing: border-box;
 		}
+
 		#chat-container {
 			height: 100%;
 			display: flex;
@@ -40,6 +41,7 @@ template.innerHTML = /*html*/`
 			background-color: #f5f4f1;
 			box-shadow: rgba(50, 50, 105, 0.15) 0px 2px 5px 0px, rgba(0, 0, 0, 0.05) 0px 1px 1px 0px;
 			border-radius: 24px;
+			overflow: hidden;
 		}
 		
 		#user-profile {
@@ -50,6 +52,7 @@ template.innerHTML = /*html*/`
 			box-shadow: rgba(50, 50, 105, 0.15) 0px 2px 5px 0px, rgba(0, 0, 0, 0.05) 0px 1px 1px 0px;
 			border-radius: 24px;
 		}
+
 		#convo-search {
 			background-color: #282c34;
 			border: none;
@@ -64,7 +67,9 @@ template.innerHTML = /*html*/`
 			align-items: center;
 			box-sizing: border-box;
 			width: 100%;
+			overflow-y: auto;
 		}
+
 		p {
 			font-size: 2.5em;
 			margin-top: 10px;
@@ -94,13 +99,23 @@ class chat extends HTMLElement {
 
 		this.convo_list_users = ['bob', 'mohamed', 'ahmed', 'zohair'];		
 
-		this.selectedMember = null;
+		this.activeMember = null;
 	}
 
 	handleMemberClick(event) {
 		const username = event.detail.username;
 		
 		// console.log("clicked on a member chat");
+
+		if (this.activeMember) {
+			this.activeMember.deactivate();
+		}
+
+		const mem = event.target;
+		mem.activate();
+		this.activeMember = mem;
+
+		console.log(`Activated chat with ${username}`);
 	}
 
 	connectedCallback() {
@@ -129,9 +144,6 @@ class chat extends HTMLElement {
 	}
 }
 
-
-
-
 const chatMemberTemplate = document.createElement('template');
 
 chatMemberTemplate.innerHTML = /*html*/ `
@@ -155,7 +167,7 @@ chatMemberTemplate.innerHTML = /*html*/ `
       		cursor: pointer;
 		}
 		.member.active {
-			background-color: red;
+			background-color: #d0c98e;
 		}
 		.avatar {
 			width: 50px;
@@ -208,22 +220,35 @@ class chatMember extends HTMLElement {
 		this.attachShadow({mode:'open'});
 		this.shadowRoot.appendChild(chatMemberTemplate.content.cloneNode(true));
 
-		this.selected = null;
+		this.isActive = false;
+	}
+
+	activate() {
+		this.isActive = true;
+		this.updateStyle();
+	}
+
+	deactivate() {
+		this.isActive = false;
+		this.updateStyle();
+	}
+
+	updateStyle() {
+		const member = this.shadowRoot.querySelector('.member');
+		if (this.isActive)
+			member.classList.add('active');
+		else
+			member.classList.remove('active');
 	}
 
 	handleClick() {
-		
 		const username = this.getAttribute('username');
-
-		const mem = this.shadowRoot.querySelector('.member');
-		mem.classList.toggle('active');
 
 		this.dispatchEvent(new CustomEvent('memberClicked', {
 			bubbles: true,
 			composed: true,
 			detail: { username }
-		  }));
-
+		}));
 	}
 
 	connectedCallback() {
@@ -244,6 +269,7 @@ class chatMember extends HTMLElement {
 		profilePicElement.src = profilePic;
 		lastMessageElement.textContent = userLastMessage;
 
+		this.updateStyle();
 	}
 
 	static get observedAttributes() {
