@@ -3,13 +3,12 @@
 const margin = "30px";
 const margin_left = "30px";
 
+const membersBorderRadius = "10px";
+
 const template = document.createElement('template');
 
 template.innerHTML = /*html*/`
 	<style>
-		:host * {
-			box-sizing: border-box;
-		}
 		:host {
 			display: block;
 			padding: 30px;
@@ -17,13 +16,13 @@ template.innerHTML = /*html*/`
 			background-color: #f1f0e8;
 			box-sizing: border-box;
 		}
-		#chat-design {
+		#chat-container {
 			height: 100%;
 			display: flex;
 		}
 
 		#convo-messages {
-			width: calc(80% - 30px);
+			width: 100%;
 			margin-left: ${margin_left};
 			height: 100%;
 			background-color: #f5f4f1;
@@ -32,6 +31,10 @@ template.innerHTML = /*html*/`
 		}
 		
 		#convo-list {
+			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
+			align-items: center;
 			width: 30em;
 			height: 100%;
 			background-color: #f5f4f1;
@@ -47,18 +50,37 @@ template.innerHTML = /*html*/`
 			box-shadow: rgba(50, 50, 105, 0.15) 0px 2px 5px 0px, rgba(0, 0, 0, 0.05) 0px 1px 1px 0px;
 			border-radius: 24px;
 		}
+		#convo-search {
+			background-color: #282c34;
+			border: none;
+			width: 90%;
+			color: white;
+			border-radius: ${membersBorderRadius};
+			padding: 1em;
+		}
+		.members_container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			box-sizing: border-box;
+			width: 100%;
+		}
+		p {
+			font-size: 2.5em;
+			margin-top: 10px;
+			margin-bottom: 10px;
+			font-weight: bold;
+			color: #282c34;
+		}
 
 	</style>
-	<div id="chat-design">
+	<div id="chat-container">
 		<div id="convo-list">
-			<p>members</p>
+			<p>Chats</p>
+			<input type="Search" id="convo-search" placeholder="Search users"> 
 		</div>
-		<div id="convo-messages">
-			<p>conversation </p>
-		</div>
-		<div id="user-profile">
-			<p>user profile </p>
-		</div>
+		<div id="convo-messages"></div>
+		<div id="user-profile"></div>
 	</div>
 `;
 
@@ -70,7 +92,15 @@ class chat extends HTMLElement {
 		let templateClone = template.content.cloneNode(true);
 		shadowRoot.append(templateClone);		
 
-		this.convo_list_users = ['bob', 'mohamed', 'ahmed', 'zohair', 'reda', 'amal', 'othman', 'ysf', 'khalid'];
+		this.convo_list_users = ['bob', 'mohamed', 'ahmed', 'zohair'];		
+
+		this.selectedMember = null;
+	}
+
+	handleMemberClick(event) {
+		const username = event.detail.username;
+		
+		// console.log("clicked on a member chat");
 	}
 
 	connectedCallback() {
@@ -79,60 +109,145 @@ class chat extends HTMLElement {
 
 	render() {
 
-		const convo_list_container = document.createElement('div');
-		convo_list_container.setAttribute('class', 'convo-list-container');
+		const convoList = this.shadowRoot.querySelector('#convo-list');
 
-
-		// const convo_messages_container = document.createElement('div');
-		// convo_messages_container.setAttribute('class', 'convo-messages-container');
-
-		convo_list_container.textContent = "";
-		
 		const membersContainer = document.createElement('div');
-		membersContainer.setAttribute('class', 'members-container');
+		membersContainer.setAttribute('class', 'members_container');
+
 
 		// setup the users
-		convo_list_container.appendChild(membersContainer);
+		convoList.appendChild(membersContainer);
 			this.convo_list_users.forEach(userNmae => {
 				const memberElement = document.createElement('wp-chat-member');
-				memberElement.setAttribute('name', userNmae);
+				memberElement.setAttribute('username', userNmae);
+				memberElement.setAttribute('profile-pic', `person.png`);
+				memberElement.setAttribute('last-message', 'hello there!');
+				memberElement.addEventListener('memberClicked', this.handleMemberClick.bind(this));
 				membersContainer.appendChild(memberElement);
 		})
+		convoList.appendChild(membersContainer);
 	}
 }
 
+
+
+
+const chatMemberTemplate = document.createElement('template');
+
+chatMemberTemplate.innerHTML = /*html*/ `
+	<style>
+		:host {
+			display: block;
+			width: 90%;
+			box-sizing: border-box;
+		}
+		.member {
+			display: flex;
+			align-items: center;
+			margin-top: 8px;
+			width: 100%;
+			color: white;
+			border-radius: ${membersBorderRadius};
+			background-color: #e1dfce;
+			box-sizing: border-box;
+			padding: 0.4em;
+			transition: background-color 0.2s ease;
+      		cursor: pointer;
+		}
+		.member.active {
+			background-color: red;
+		}
+		.avatar {
+			width: 50px;
+			height: 50px;
+			margin-right: 1em;
+			border: 1px solid #282c34;
+			border-radius: 50%;
+		}
+
+		#profile-pic {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+		.user-info {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			flex-grow: 1;
+		}
+
+		.username {
+			font-weight: bold;
+			color: #282c34;
+			margin-bottom: 2px;
+		}
+
+		.last-message {
+			font-size: 0.8em;
+			color: #a0a0a0;
+		}
+
+	</style>
+
+	<div class="member">
+		<div class="avatar">
+			<img id="profile-pic" src="/api/placeholder/40/40" alt="profile picture">
+		</div>
+		<div class="user-info">
+			<div class="username"></div>
+			<div class="last-message">Last message ...</div>
+		</div>
+	</div>
+`;
 
 class chatMember extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({mode:'open'});
+		this.shadowRoot.appendChild(chatMemberTemplate.content.cloneNode(true));
+
+		this.selected = null;
+	}
+
+	handleClick() {
+		
+		const username = this.getAttribute('username');
+
+		const mem = this.shadowRoot.querySelector('.member');
+		mem.classList.toggle('active');
+
+		this.dispatchEvent(new CustomEvent('memberClicked', {
+			bubbles: true,
+			composed: true,
+			detail: { username }
+		  }));
+
 	}
 
 	connectedCallback() {
 		this.render();
+		this.shadowRoot.querySelector('.member').addEventListener('click', this.handleClick.bind(this));
 	}
 	
 	render() {
-		const wrapper = document.createElement('div');
-		wrapper.setAttribute('class', 'member');
-		wrapper.textContent = "member";
+		const username = this.getAttribute('username' || 'Unknown User');
+		const profilePic = this.getAttribute('profile-pic');
+		const userLastMessage = this.getAttribute('last-message' || 'No message yet');
 
+		const userNameElement = this.shadowRoot.querySelector('.username');
+		const profilePicElement = this.shadowRoot.querySelector('#profile-pic');
+		const lastMessageElement = this.shadowRoot.querySelector('.last-message');
 
-		const style = document.createElement('style');
+		userNameElement.textContent = username;
+		profilePicElement.src = profilePic;
+		lastMessageElement.textContent = userLastMessage;
 
-		style.textContent = `
-			.member {
-				height: 50px;
-				color: white;
-				padding: 15px;
-				width: 350px;
-				border-radius: 24px;
-				background-color: #282c34;
-			}
-		`;
-		
-		this.shadowRoot.appendChild(wrapper);
-		this.shadowRoot.appendChild(style);
+	}
+
+	static get observedAttributes() {
+		return ['username', 'profile-pic', 'last-message'];
 	}
 }
 
