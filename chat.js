@@ -61,6 +61,7 @@ template.innerHTML = /*html*/`
 			border-radius: ${membersBorderRadius};
 			padding: 1em;
 		}
+
 		.members_container {
 			display: flex;
 			flex-direction: column;
@@ -79,7 +80,7 @@ template.innerHTML = /*html*/`
 		}
 
 	</style>
-	<div id="chat-container">
+	<div id="chat-container" >
 		<div id="convo-list">
 			<p>Chats</p>
 			<input type="Search" id="convo-search" placeholder="Search users"> 
@@ -166,6 +167,10 @@ chatMemberTemplate.innerHTML = /*html*/ `
 			transition: background-color 0.2s ease;
       		cursor: pointer;
 		}
+		.member:hover {
+			background-color: #d0c98e;
+		}
+
 		.member.active {
 			background-color: #d0c98e;
 		}
@@ -175,6 +180,7 @@ chatMemberTemplate.innerHTML = /*html*/ `
 			margin-right: 1em;
 			border: 1px solid #282c34;
 			border-radius: 50%;
+			overflow: hidden;
 		}
 
 		#profile-pic {
