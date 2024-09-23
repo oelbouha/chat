@@ -14,7 +14,7 @@ template.innerHTML = /*html*/`
     }
 
     #convo-list {
-        width: 400px;
+        width: 300px;
         min-width: 250px;
         background-color: #f8f9fa;
         border-right: 1px solid #dee2e6;
@@ -39,6 +39,16 @@ template.innerHTML = /*html*/`
 		display: none !important;
 	}
 
+    #convo-header {
+        position: absolute;
+        top:0;
+        left:0;
+        width: 100%;
+        height: 4em;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
     @media (max-width: 992px) {
 		#user-profile .min {
 			display: initial !important;
@@ -62,10 +72,13 @@ template.innerHTML = /*html*/`
             <input type="search" id="convo-search" class="form-control mb-3" placeholder="Search users">
             <div class="members_container"></div>
         </div>
-        <div id="convo-messages" class="p-3">
-			<h4 class="mb-3"> Conversation</h4>
+        <div id="convo-messages" class="p-3 position-relative">
+			<div id="convo-header" class="p-3">
+                <h4>Conversation</h4>
+            </div>
+            <div id="message-input"> </div>
 		</div>
-        <div id="user-profile" class="p-3">
+        <div id="user-profile" class="p-3 col-2">
 			<div class="min">minified</div>
 			<div class="max">
 				<h4 class="mb-3"> Profile </h4>
@@ -100,10 +113,18 @@ class Chat extends HTMLElement {
         this.activeMember = mem;
 
         console.log(`Activated chat with ${username}`);
+        
+        // load the conversation
+
+
+
+        /// load the profile info
+
     }
 
     connectedCallback() {
         this.render();
+        this.shadowRoot.addEventListener('memberClicked', this.handleMemberClick.bind(this));
     }
 
     render() {
@@ -119,6 +140,12 @@ class Chat extends HTMLElement {
     }
 }
 
+
+
+/*    Chat Members  web component    */
+
+
+
 const chatMemberTemplate = document.createElement('template');
 
 chatMemberTemplate.innerHTML = /*html*/ `
@@ -131,44 +158,41 @@ chatMemberTemplate.innerHTML = /*html*/ `
         }
         .member {
             display: flex;
-            align-items: center;
-            padding: 10px;
-            border-radius: 8px;
-            transition: background-color 0.2s ease;
+            flex-direction: row;
+            padding: 1em;
             cursor: pointer;
+            border-bottom: 1px solid #e9ecef;
         }
         .member:hover, .member.active {
             background-color: #e9ecef;
         }
-        .avatar {
+
+        .profile-pic {
             width: 50px;
             height: 50px;
-            margin-right: 15px;
-			background-color: brown;
-			border-radius: 50%;
+            border-radius: 50%;
+            margin-right: 14px;
+            background-color: #4b3a3a;
+        }
 
-        }
-        #profile-pic {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
         .user-info {
-            flex-grow: 1;
         }
+
         .username {
             font-weight: bold;
             margin-bottom: 2px;
         }
+
         .last-message {
             font-size: 0.8em;
             color: #6c757d;
         }
+
     </style>
 
     <div class="member">
-        <div class="avatar">
-            <img id="profile-pic" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
+        <div class="profile-pic">
+            <img id="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
         </div>
         <div class="user-info">
             <div class="username"></div>
@@ -226,7 +250,7 @@ class chatMember extends HTMLElement {
 		const userLastMessage = this.getAttribute('last-message' || 'No message yet');
 
 		const userNameElement = this.shadowRoot.querySelector('.username');
-		const profilePicElement = this.shadowRoot.querySelector('#profile-pic');
+		const profilePicElement = this.shadowRoot.querySelector('#user-image');
 		const lastMessageElement = this.shadowRoot.querySelector('.last-message');
 
 		userNameElement.textContent = username;
@@ -243,10 +267,38 @@ class chatMember extends HTMLElement {
 
 
 
-class conversation extends HTMLElement {
+
+/*    conversation web component    */
+
+
+const ConversationTemplate = document.createElement('template');
+
+ConversationTemplate.textContent = /*html*/ `
+    <style>
+        #convo-header {
+            
+        }
+        #convo-messages {
+
+        }
+        #message-input {
+
+        }
+    </style>
+    <div id="Conversation">
+        <div id="convo-header"> </div>
+        <div id="convo-messages"> </div>
+        <div id="message-input"> </div>
+    </div>
+`;
+
+
+class Conversation extends HTMLElement {
 	constructor() {
 		super();
-		this.attachShadow({mode: 'open'});
+		this.attachShadow({mode:'open'});
+		this.shadowRoot.appendChild(ConversationTemplate.content.cloneNode(true));
+
 	}
 
 	connectedCallback() {
@@ -254,23 +306,7 @@ class conversation extends HTMLElement {
 	}
 
 	render() {
-		const wrapper = document.createElement('div');
-		wrapper.setAttribute('class', 'conversation-container');
-		wrapper.textContent = "conversation";
-
-		const style = document.createElement('style');
-
-		style.textContent = `
-			.conversation-container {
-				width : 300px;
-				height: 900px;
-
-				border: 1px solid black;
-			}
-		`;
-
-		this.shadowRoot.appendChild(wrapper);
-		this.shadowRoot.appendChild(style);
+		
 	}
 
 }
@@ -278,4 +314,5 @@ class conversation extends HTMLElement {
 
 customElements.define("wp-chat", Chat);
 customElements.define("wp-chat-member", chatMember);
+customElements.define("wp-conversation", Conversation);
 
