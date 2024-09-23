@@ -103,7 +103,8 @@ class Chat extends HTMLElement {
 
     handleMemberClick(event) {
         const username = event.detail.username;
-        
+
+
         if (this.activeMember) {
             this.activeMember.deactivate();
         }
@@ -115,20 +116,33 @@ class Chat extends HTMLElement {
         console.log(`Activated chat with ${username}`);
         
         // load the conversation
-
-
-
+        
+        
         /// load the profile info
-
+        
     }
-
+    
     connectedCallback() {
         this.render();
         this.shadowRoot.addEventListener('memberClicked', this.handleMemberClick.bind(this));
     }
-
+    
     render() {
         const membersContainer = this.shadowRoot.querySelector('.members_container');
+
+
+        ////
+        const username = "ahmed";
+        const chatConversation = this.shadowRoot.querySelector('#convo-messages');
+        chatConversation.innerHTML = ``;
+    
+        const wpChatconversation = document.createElement('wp-chat-conversation');
+        
+        wpChatconversation.setAttribute('username', username);
+        // wpChatconversation.setAttribute('profile-pic', profilePic);
+    
+        chatConversation.appendChild(wpChatconversation);
+        ///
         
         this.convo_list_users.forEach(username => {
             const memberElement = document.createElement('wp-chat-member');
@@ -273,22 +287,97 @@ class chatMember extends HTMLElement {
 
 const ConversationTemplate = document.createElement('template');
 
-ConversationTemplate.textContent = /*html*/ `
+ConversationTemplate.innerHTML = /*html*/ `
     <style>
+         @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 14px;
+            background-color: #4b3a3a;
+            overflow: hidden;
+        }
+        #conversation {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
         #convo-header {
-            
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
         }
         #convo-messages {
-
+            flex: 1 1 auto;
+            overflow-y: auto;
         }
-        #message-input {
-
+        #message-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4em;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background-color: #f8f9fa;
+            border-top : 1px solid  #dee2e6;
+            height: 4em;
+            box-sizing: border-box;
         }
+        
+        .message-input {
+            flex-grow: 1;
+            margin-left: 20px;
+            margin-right: 20px;
+            border-radius: 8px;
+            border: none;
+            background-color:  #dee2e6;
+        }
+
+        .username {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .last-message {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        .member {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 1em;
+            height: 100%;
+            border-bottom: 1px solid #e9ecef;
+            box-sizing: border-box;
+        }
+
     </style>
-    <div id="Conversation">
-        <div id="convo-header"> </div>
-        <div id="convo-messages"> </div>
-        <div id="message-input"> </div>
+    <div id="conversation position-relative">
+        <div id="convo-header">
+            <div class="member">
+                <div class="profile-pic">
+                    <img id="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
+                </div>
+                <div class="user-info">
+                    <div class="username">username</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="convo-messages" class="p-3"> this is the messages</div>
+
+        <div id="message-container" class="p-3">
+            <div class="plus"> add </div>
+            
+            <input class="message-input p-2"  type="text" placeholder="Type a message">
+            <button class="btn btn-primary" type="submit">Send</button>
+        </div>
     </div>
 `;
 
@@ -306,13 +395,27 @@ class Conversation extends HTMLElement {
 	}
 
 	render() {
-		
+        const username = this.getAttribute('username');
+        const userProfilePic = this.getAttribute('user-image');
+
+        const userNmaeElement = this.shadowRoot.querySelector('.username');
+        userNmaeElement.textContent = username;
+        const userMessages = this.shadowRoot.querySelector('#convo-messages');
+        userMessages.innerHTML = `
+            <p> conversation with ${username} </p>
+            <p> last message </p>
+        `;
+
+        console.log("username ::" , username);
 	}
 
+    static get observedAttributes() {
+		return ['username', 'profile-pic', 'last-message'];
+	}
 }
 
 
 customElements.define("wp-chat", Chat);
 customElements.define("wp-chat-member", chatMember);
-customElements.define("wp-conversation", Conversation);
+customElements.define("wp-chat-conversation", Conversation);
 
