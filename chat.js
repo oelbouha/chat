@@ -143,7 +143,7 @@ class Chat extends HTMLElement {
         this.convo_list_users.forEach(username => {
             const memberElement = document.createElement('wp-chat-member');
             memberElement.setAttribute('username', username);
-            memberElement.setAttribute('profile-pic', `person.png`);
+            memberElement.setAttribute('profile-pic', `after.png`);
             memberElement.setAttribute('last-message', 'hello there!');
             membersContainer.appendChild(memberElement);
         });
@@ -183,13 +183,17 @@ chatMemberTemplate.innerHTML = /*html*/ `
             height: 50px;
             border-radius: 50%;
             margin-right: 14px;
-            background-color: #4b3a3a;
+            overflow: hidden;
+            object-fit: cover;
         }
 
-        .user-info {
+        .user-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .username {
+        .user-name {
             font-weight: bold;
             margin-bottom: 2px;
         }
@@ -203,10 +207,10 @@ chatMemberTemplate.innerHTML = /*html*/ `
 
     <div class="member">
         <div class="profile-pic">
-            <img id="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
+            <img class="user-image" src="/api/placeholder/50/50" alt="profile picture" >
         </div>
         <div class="user-info">
-            <div class="username"></div>
+            <div class="user-name"></div>
             <div class="last-message">Last message ...</div>
         </div>
     </div>
@@ -261,8 +265,8 @@ class chatMember extends HTMLElement {
 		const profilePic = this.getAttribute('profile-pic');
 		const userLastMessage = this.getAttribute('last-message' || 'No message yet');
 
-		const userNameElement = this.shadowRoot.querySelector('.username');
-		const profilePicElement = this.shadowRoot.querySelector('#user-image');
+		const userNameElement = this.shadowRoot.querySelector('.user-name');
+		const profilePicElement = this.shadowRoot.querySelector('.user-image');
 		const lastMessageElement = this.shadowRoot.querySelector('.last-message');
 
 		userNameElement.textContent = username;
@@ -299,10 +303,13 @@ ConversationTemplate.innerHTML = /*html*/ `
             height: 50px;
             border-radius: 50%;
             margin-right: 14px;
-            background-color: #4b3a3a;
             overflow: hidden;
         }
-        
+        .user-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         #conversation {
             display: flex;
             flex-direction: column;
@@ -346,28 +353,32 @@ ConversationTemplate.innerHTML = /*html*/ `
             font-size: 0.8em;
             color: #6c757d;
         }
+
         .member {
             display: flex;
             align-items: center;
             padding: 1em;
             border-bottom: 1px solid #e9ecef;
         }
+
         .user-info {
             font-weight: bold;
         }
+
         .plus {
             cursor: pointer;
             font-size: 2em;
         }
+
     </style>
     <div id="conversation">
         <div id="convo-header">
             <div class="member">
                 <div class="profile-pic">
-                    <img id="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
+                    <img class="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
                 </div>
                 <div class="user-info">
-                    <div class="username">username</div>
+                    <div class="user-name">username</div>
                 </div>
             </div>
         </div>
@@ -401,10 +412,10 @@ class Conversation extends HTMLElement {
 
         // console.log("profile pic " ,userProfilePic);
 
-        const userNmaeElement = this.shadowRoot.querySelector('.username');
+        const userNmaeElement = this.shadowRoot.querySelector('.user-name');
         userNmaeElement.textContent = username;
 
-        const userProfilePicElement = this.shadowRoot.querySelector('#user-image');
+        const userProfilePicElement = this.shadowRoot.querySelector('.user-image');
         userProfilePicElement.src = userProfilePic;
 
         const userMessages = this.shadowRoot.querySelector('#convo-messages');
@@ -437,15 +448,21 @@ profileTemplate.innerHTML = /*html*/ `
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         width: 100%;
     }
 
-    #user-image {
+    .profile-pic {
         width: 200px;
         height: 200px;
-        overflow: hidden;
         border-radius: 50%;
         background-color: #dee2e6;
+        overflow: hidden;
+    }
+    .user-image {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
     }
 
     .user-info {
@@ -456,8 +473,10 @@ profileTemplate.innerHTML = /*html*/ `
 
     </style>
     <div class="profile-info p-3">
-        <img id="user-image" src="/api/placeholder/50/50" alt="profile picture">
-        <h4 class="username"></h4>
+        <div class="profile-pic">
+            <img class="user-image" src="/api/placeholder/50/50" alt="profile picture">
+        </div>
+        <h4 class="user-name"></h4>
     </div>
 
 `;
@@ -478,8 +497,8 @@ class Profile extends HTMLElement {
         const username = this.getAttribute('username');
         const userProfilePic = this.getAttribute('profile-pic');
     
-        const userImageElement = this.shadowRoot.querySelector('#user-image');
-        const usernameElement = this.shadowRoot.querySelector('.username');
+        const userImageElement = this.shadowRoot.querySelector('.user-image');
+        const usernameElement = this.shadowRoot.querySelector('.user-name');
         userImageElement.src = userProfilePic;
         usernameElement.textContent = username;
     }
