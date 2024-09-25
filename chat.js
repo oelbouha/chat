@@ -241,7 +241,7 @@ chatMemberTemplate.innerHTML = /*html*/ `
             border-bottom: 1px solid #e9ecef;
         }
         .member:hover, .member.active {
-            background-color: #e9ecef;
+            background-color: #e0e0e0;
         }
 
         .profile-pic {
@@ -519,10 +519,9 @@ class Conversation extends HTMLElement {
         userProfilePicElement.src = userProfilePic;
 
         const userMessages = this.shadowRoot.querySelector('#convo-messages');
-        userMessages.innerHTML = `
-            <p> conversation with ${username} </p>
-            <p> last message </p>
-        `;
+        userMessages.textContent = '';
+        const wp_message = document.createElement('wp-message');
+        userMessages.appendChild(wp_message);
 	}
 
     static get observedAttributes() {
@@ -613,7 +612,7 @@ class Profile extends HTMLElement {
         const userProfileInfo = this.shadowRoot.querySelector('#user-profile-info');
         const wp_userProfileInfo = document.createElement('wp-card');
         
-        for (let i = 0; i < 5; ++i) {
+        for (let i = 0; i < 4; ++i) {
             const mem = document.createElement('wp-card');
             userProfileInfo.appendChild(mem);
         }
@@ -698,9 +697,74 @@ class Card extends HTMLElement {
 }
 
 
+
+const messageTemplate = document.createElement('template');
+
+messageTemplate.innerHTML = /*html*/ `
+	<style>
+		 @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+         
+		.message-container {
+			display: flex;
+		}
+		.message {
+			background-color: #282c34;
+			color: white;
+			padding: 10px 12px;
+			border-radius: 7.5px;
+			font-size: 14px;
+		}
+		.message-time {
+			color: white;
+			position: absolute;
+			bottom: 4%;
+			right: 5%;
+		}
+		
+	</style>
+	<div class="message-container m-4">
+		<div class="message p-2 position-relative">
+			<p>Hello, how are you  fdfdfdfdfdfdfd?</p>
+			<div class="message-time" >
+				10:30 AM
+			</div>
+		</div>
+  </div>
+`;
+
+class Message extends HTMLElement {
+	constructor() {
+		super();
+		this.attachShadow({mode:'open'});
+        this.shadowRoot.appendChild(messageTemplate.content.cloneNode(true));
+	}
+
+    connectedCallback() {
+        this.render();
+    }
+	
+	getCurrentTime() {
+		const now = new Date();
+		return now.toLocaleTimeString([], {hour:'2-digit', minute: '2-digit'});
+	}
+
+	render() {
+		const mesaageContainer = this.shadowRoot.querySelector('.message-container');
+		const time = this.getCurrentTime();
+		
+		const timeElement = this.shadowRoot.querySelector('.message-time');
+		timeElement.textContent = time;
+
+	}
+}
+
+
+
 customElements.define("wp-chat", Chat);
 customElements.define("wp-chat-member", chatMember);
 customElements.define("wp-chat-conversation", Conversation);
 customElements.define("wp-chat-profile", Profile);
 customElements.define("wp-card", Card);
+customElements.define("wp-message", Message);
+
 
