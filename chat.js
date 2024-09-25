@@ -436,7 +436,7 @@ ConversationTemplate.innerHTML = /*html*/ `
             font-weight: bold;
         }
 
-        .add-image-icon{
+        .add-image-icon {
             cursor: pointer;
             width: 25px;
             height: 25px;
@@ -547,9 +547,9 @@ profileTemplate.innerHTML = /*html*/ `
     .profile-container {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border-bottom: 1px solid #dee2e6;
+        gap: 1em;
+        height: 100%;
+        overflow-y: auto;
     }
 
     .profile-pic {
@@ -559,7 +559,8 @@ profileTemplate.innerHTML = /*html*/ `
         justify-content: center;
         width: 300px;
         height: 300px;
-        overflow: hidden;
+        background-color: #e0e0e0;
+        border-radius: 14px;
     }
     .user-image {
         width: 200px;
@@ -568,56 +569,27 @@ profileTemplate.innerHTML = /*html*/ `
         object-fit: cover;
     }
 
-    .user-info {
-        width: 100%;
-        border-bottom: 1px solid #dee2e6;
-    }
     
     .profile-header {
-        width: 100%;
-        height: 5em;
         font-weight: bold;
-        padding: 1em;
-        border-bottom: 1px solid #dee2e6;
-        box-sizing: border-box;
     }
 
-    .user-icon {
-        width: 29px;
-        height: 20px;
+    #user-profile-info {
+        background-color: #e0e0e0;
+        border-radius: 14px;
     }
 
-    .user-name-container {
-        display: flex;
-        flex-direction: column;
-        border: 1px solid red;
-    }
     </style>
-    <div class="profile-container">
+    <div class="profile-container p-3">
         <div class="profile-header">
             <h3 >Profile info</h3>
         </div>
+        
         <div class="profile-pic">
             <img class="user-image" src="/api/placeholder/50/50" alt="profile picture">
             <h4 class="user-name"></h4>
         </div>
-    </div>
-
-    <div id="user-profile" class="p-3">
-        <div class="user-info">
-            <div class="user-name-container">
-                <h4>Username</h4>
-                <?xml version="1.0" encoding="UTF-8"?>
-                <svg class="user-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m16,23.314c-1.252.444-2.598.686-4,.686s-2.748-.242-4-.686v-2.314c0-2.206,1.794-4,4-4s4,1.794,4,4v2.314ZM12,7c-1.103,0-2,.897-2,2s.897,2,2,2,2-.897,2-2-.897-2-2-2Zm12,5c0,4.433-2.416,8.311-6,10.389v-1.389c0-3.309-2.691-6-6-6s-6,2.691-6,6v1.389C2.416,20.311,0,16.433,0,12,0,5.383,5.383,0,12,0s12,5.383,12,12Zm-8-3c0-2.206-1.794-4-4-4s-4,1.794-4,4,1.794,4,4,4,4-1.794,4-4Z"/></svg>
-                <p> @username</p>
-            </div>
-            <h4> Mobile</h4>
-            <p>0666666666</p>
-            <h4>Bio</h4>
-            <p>this is a description of the user ...</p>
-            <h4>Email</h4>
-            <p>user-mail@gmail.com</p>
-        </div>
+        <div id="user-profile-info" class="p-3"></div>
     </div>
 
 `;
@@ -637,10 +609,18 @@ class Profile extends HTMLElement {
     render() {
         const username = this.getAttribute('username');
         const userProfilePic = this.getAttribute('profile-pic');
+        
+        const userProfileInfo = this.shadowRoot.querySelector('#user-profile-info');
+        const wp_userProfileInfo = document.createElement('wp-card');
+        
+        for (let i = 0; i < 5; ++i) {
+            const mem = document.createElement('wp-card');
+            userProfileInfo.appendChild(mem);
+        }
+
     
         const userImageElement = this.shadowRoot.querySelector('.user-image');
         const usernameElement = this.shadowRoot.querySelector('.user-name');
-
         const min = this.shadowRoot.querySelector('.min');
         console.log("min :: ", min);
 
@@ -660,24 +640,37 @@ cardTemplate.innerHTML = /*html*/ `
     <style>
         @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
 
+        :host {
+            display: block;
+            width: 100%;
+        }
+        
         #card-container {
             display: flex;
             flex-direction: column;
         }
         
         .card-icon {
-            width: 20px;
-            height: 20px;
+            margin-top: 5px;
+            width: 15px;
+            height: 15px;
+        }
+        
+        .card-body-container {
+            margin-left: 0.5em;
+            display: flex;
+            gap: 10px;
+            justify-content: start;
         }
 
     </style>
     <div id="card-container">
         <div class="card-header">
-            <h4> Header </h4>
+            <h5> Header </h5>
         </div>
         <div class="card-body-container">
             <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m16,23.314c-1.252.444-2.598.686-4,.686s-2.748-.242-4-.686v-2.314c0-2.206,1.794-4,4-4s4,1.794,4,4v2.314ZM12,7c-1.103,0-2,.897-2,2s.897,2,2,2,2-.897,2-2-.897-2-2-2Zm12,5c0,4.433-2.416,8.311-6,10.389v-1.389c0-3.309-2.691-6-6-6s-6,2.691-6,6v1.389C2.416,20.311,0,16.433,0,12,0,5.383,5.383,0,12,0s12,5.383,12,12Zm-8-3c0-2.206-1.794-4-4-4s-4,1.794-4,4,1.794,4,4,4,4-1.794,4-4Z"/></svg>
-            <p id="card-body"> Body ... </p>
+            <p id="card-body">this is the body </p>
         </div>
     </div>
 `;
