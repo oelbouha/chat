@@ -79,11 +79,15 @@ template.innerHTML = /*html*/`
     #convo-search {
         padding-left: 3rem;
     }
+
+    #convo-messages .profile-icon-container {
+        display: none;
+    }
+
     @media (max-width: 992px) {
-		#user-profile {
-			display: none !important;
+        #user-profile {
+            display: none !important    
 		}
-        
     }
 </style>
 
@@ -99,10 +103,13 @@ template.innerHTML = /*html*/`
             </div>
             <div class="members_container"></div>
         </div>
-        <div id="convo-messages" class="position-relative"></div>
-        <div id="user-profile">
-		</div>
 
+        <div id="convo-messages" class="position-relative">
+
+        </div>
+        
+        <div id="user-profile">
+        </div>
     </div>
 </div>
 `;
@@ -170,6 +177,7 @@ class Chat extends HTMLElement {
             }
         });
     }
+
     connectedCallback() {
         this.render();
         this.shadowRoot.addEventListener('memberClicked', this.handleMemberClick.bind(this));
@@ -196,7 +204,7 @@ class Chat extends HTMLElement {
         
         /// load the profile info
         const profileElement = this.shadowRoot.querySelector('#user-profile');
-        profileElement.innerHTML = ``;
+        // profileElement.innerHTML = ``;
         const wpProfile = document.createElement('wp-chat-profile');
         
         wpProfile.setAttribute('username', username);
@@ -356,6 +364,14 @@ class chatMember extends HTMLElement {
 const ConversationTemplate = document.createElement('template');
 
 ConversationTemplate.innerHTML = /*html*/ `
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title></title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    
     <style>
          @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
         
@@ -389,7 +405,7 @@ ConversationTemplate.innerHTML = /*html*/ `
             border-bottom: 1px solid #dee2e6;
         }
 
-        #convo-messages {
+        #convo-messages-container {
             flex: 1 1 auto;
             overflow-y: auto;
             padding-bottom: 4em; /* Make room for the input container */
@@ -444,7 +460,7 @@ ConversationTemplate.innerHTML = /*html*/ `
 
         #send-btn-icon {
             cursor: pointer;
-            width: 25px;
+            width:  25px;
             height: 25px;
             display: none;
         }
@@ -452,30 +468,112 @@ ConversationTemplate.innerHTML = /*html*/ `
             display: block;
         }
 
+        .profile-icon-container {
+            display: none;
+        }
+        
+
+
+        .custom-offcanvas {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 400px;
+            height: 100%;
+            background-color: #fff;
+            transition: right 0.3s ease-in-out;
+            z-index: 1000;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .custom-offcanvas.show {
+            right: 0;
+        }
+
+        .custom-offcanvas-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .custom-offcanvas-body {
+            padding: 1rem;
+        }
+
+        .custom-offcanvas-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .custom-offcanvas-backdrop.show {
+            display: block;
+        }
+
+        @media (max-width: 992px) {
+            .profile-icon-container {
+                display: block;
+                position: absolute;
+                right: 1%;
+                cursor: pointer;
+            }
+            .profile-icon-container .profile-icon {
+                width:  25px;
+                height: 25px;
+            }
+        }
+
     </style>
-    <div id="conversation">
-        <div id="convo-header">
-            <div class="member">
-                <div class="profile-pic">
-                    <img class="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
+    </head>
+    <body>
+        <div id="conversation">
+            <div id="convo-header">
+                <div class="member">
+                    <div class="profile-pic">
+                        <img class="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">username</div>
+                    </div>
+                    <div class="profile-icon-container">
+                        <svg class="profile-icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve" width="512" height="512">
+                        <g>
+                            <circle cx="256" cy="53.333" r="53.333"/>
+                            <circle cx="256" cy="256" r="53.333"/>
+                            <circle cx="256" cy="458.667" r="53.333"/>
+                        </g>
+                    </div>
                 </div>
-                <div class="user-info">
-                    <div class="user-name">username</div>
-                </div>
+            </div>
+            
+            <div id="convo-messages-container" class="p-3"> this is the messages</div>
+
+            <div id="input-message-container">
+                    <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
+                        <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z"/>
+                    </svg>
+                <input id="message-input" type="text" placeholder="Type a message">
+                <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z"/>
+                </svg>
             </div>
         </div>
         
-        <div id="convo-messages" class="p-3"> this is the messages</div>
-
-        <div id="input-message-container">
-                <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                    <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z"/>
-                </svg>
-            <input id="message-input" type="text" placeholder="Type a message">
-            <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z"/>
-            </svg>
+            
+        <div class="custom-offcanvas p-3" id="customOffcanvas">
+            <div class="custom-offcanvas-header">
+                <button type="button" class="btn-close" id="offcanvasCloseBtn"></button>
+            </div>
+            <div class="custom-offcanvas-body"></div>
         </div>
-    </div>
+
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+        
+        </body>
+</html>
 `;
 
 
@@ -490,8 +588,36 @@ class Conversation extends HTMLElement {
 	connectedCallback() {
 		this.render();
 
+        const profileIcon = this.shadowRoot.querySelector('.profile-icon');
         this.shadowRoot.querySelector('#message-input').addEventListener('input', this.handleMessage.bind(this));
+        profileIcon.addEventListener('click', this.handleOffCanvas.bind(this));
+
+        const offcanvasCloseBtn = this.shadowRoot.querySelector('#offcanvasCloseBtn');
+        offcanvasCloseBtn.addEventListener('click', this.handleCloseOffcanvas.bind(this));
 	}
+
+    handleCloseOffcanvas(event) {
+        const offcanvas = this.shadowRoot.querySelector('#customOffcanvas');
+        offcanvas.classList.remove('show');
+    }
+
+    handleOffCanvas(event) {
+
+        const username = this.getAttribute('username' || 'Unknown User');
+		const profilePic = this.getAttribute('profile-pic');
+
+        const customOffcanvasBody = this.shadowRoot.querySelector('.custom-offcanvas-body');
+        customOffcanvasBody.innerHTML = ``;
+
+        const wpProfile = document.createElement('wp-chat-profile');
+        wpProfile.setAttribute('username', username);
+        wpProfile.setAttribute('profile-pic', profilePic);
+        
+        customOffcanvasBody.appendChild(wpProfile);
+
+        const offcanvas = this.shadowRoot.querySelector('#customOffcanvas');
+        offcanvas.classList.add('show');
+    }
 
     handleMessage(event) {
         const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
@@ -518,7 +644,7 @@ class Conversation extends HTMLElement {
         const userProfilePicElement = this.shadowRoot.querySelector('.user-image');
         userProfilePicElement.src = userProfilePic;
 
-        const userMessages = this.shadowRoot.querySelector('#convo-messages');
+        const userMessages = this.shadowRoot.querySelector('#convo-messages-container');
         userMessages.textContent = '';
         const wp_message = document.createElement('wp-message');
         userMessages.appendChild(wp_message);
