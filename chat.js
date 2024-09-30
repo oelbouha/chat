@@ -18,16 +18,24 @@ template.innerHTML = /*html*/`
         min-width: 250px;
         background-color: #f8f9fa;
         border-right: 1px solid #dee2e6;
+        transition: width 0.3s ease;
     }
+
 
     #convo-messages {
         background-color: #e0e0e0;
         flex-grow: 1;
+        transition: width 0.3s ease;
+        display: flex;
+        flex-direction: column;
     }
 
     #user-profile {
+        width: 350px;
+        min-width: 300px;
         background-color: #f8f9fa;
         border-left: 1px solid #dee2e6;
+        transition: width 0.3s ease;
     }
 
     .members_container {
@@ -39,79 +47,233 @@ template.innerHTML = /*html*/`
 		display: none !important;
 	}
 
-    #convo-header {
-        position: absolute;
-        top:0;
-        left:0;
-        width: 100%;
-        height: 4em;
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .chat-header {
-    }
-
-    #convo-search {
-
-    }
     .search-container {
         position: relative;
     }
+
     .search-icon {
         position: absolute;
         left: 1em;
-        
         top: 50%;
         transform: translateY(-50%);
-
         width: 1.5rem;
         height: 1.5rem;
         pointer-events: none;
     }
 
     #convo-search:focus {
-            outline: none;
-            border-color: #ccc;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        outline: none;
+        border-color: #ccc;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     }
 
-    #convo-search {
+    #convo-search, .form-control {
         padding-left: 3rem;
     }
 
-    #convo-messages .profile-icon-container {
+    #convo-header {
+        width: 100%;
+        background-color: #f8f9fa;
+        display: flex;
+        flex-direction: row;
+    }
+
+    .member {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1em;
+            border-bottom: 1px solid #e9ecef;
+    }
+
+    .profile-pic {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-right: 14px;
+        overflow: hidden;
+        border: 1px solid #e0e0e0;
+    }
+
+    #user-image {
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+    }
+    .user-info {
+        font-weight: bold;
+    }
+
+    #user-convo {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 20px;
+    }
+    #list-icon-container .list-icon, .profile-icon-container .profile-icon {
         display: none;
     }
 
-    @media (max-width: 992px) {
+
+        .profileOffcanvas {
+            position: fixed;
+            top: 0;
+            right: -200%;
+            height: 100%;
+            background-color: #fff;
+            transition: right 0.3s ease-in-out;
+            z-index: 1000;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        }
+        .list-offcanvas {
+            position: fixed;
+            top: 0;
+            left: -200%;
+            height: 100%;
+            width: 300px;
+            background-color: #fff;
+            transition: right 0.3s ease-in-out;
+            z-index: 1001;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .profileOffcanvas.show {
+            right: 0;
+        }
+
+        .list-offcanvas.show {
+            left: 0;
+        }
+
+        .profile-offcanvas-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .list-offcanvas-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .custom-offcanvas-body {
+
+        }
+
+        #profileOffcanvas, #list-offcanvas {
+            overflow-y: auto;
+        }
+    
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .overlay.show {
+            display: block;
+        }
+
+        #list-offcanvas-body {
+        
+        }
+
+    @media (max-width: 1200px) {
         #user-profile {
             display: none !important    
 		}
+        .profile-icon-container .profile-icon {
+            display: initial !important;
+            width: 30px;
+            height: 30px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        #convo-list {
+            display: none !important;
+        }
+        #min {
+            width: 100px;
+            height: 100px;
+            background-color: red;
+        }
+        #list-icon-container .list-icon, .profile-icon-container .profile-icon {
+            display: initial !important;
+            width: 30px;
+            height: 30px;
+        }
     }
 </style>
 
-<div class="container-fluid chat-container p-0">
-    <div class="d-flex h-100 position-relative">
+<body>
+    <div class="chat-container position-relative">
+        <div class="d-flex h-100 position-relative">
         <div id="convo-list" class="p-3">
-            <h4 class="chat-header mb-3">Chats</h5>
-            <div class="search-container">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <input type="search" id="convo-search" class="form-control mb-3" placeholder="Search">
+                <h4 class="chat-header mb-3">Chats</h5>
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <input type="search" id="convo-search" class="form-control mb-3" placeholder="Search">
+                </div>
+                <div class="members_container"></div>
             </div>
-            <div class="members_container"></div>
-        </div>
 
-        <div id="convo-messages" class="position-relative">
-
-        </div>
-        
-        <div id="user-profile">
+            <div id="convo-messages">
+                <div id="convo-header">
+                    <div class="member">             
+                        <div id="user-convo">
+                            <div id="list-icon-container">
+                                <svg class="list-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
+                                <path d="M3.166,2.914c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
+                                <path d="M8.745,6.099h13.255c.553,0,1-.448,1-1s-.447-1-1-1H8.745c-.553,0-1,.448-1,1s.447,1,1,1Z"/>
+                                <path d="M3.166,9.815c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
+                                <path d="M22,11H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
+                                <path d="M3.166,16.716c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
+                                <path d="M22,17.901H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
+                              </svg>
+                            </div>
+                            <div class="profile-pic">
+                                <img id="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">username</div>
+                            </div>
+                            </div>
+                            <div class="profile-icon-container p-2">
+                                <img class="profile-icon" src="assets/circle-user.svg" >
+                            </div>
+                        </div>
+                </div>
+            </div>
+            
+            <div id="user-profile"></div>
         </div>
     </div>
-</div>
+
+    <div class="profileOffcanvas d-flex flex-column col-lg-4 col-md-4 col-sm-6 " id="profileOffcanvas">
+        <div class="profile-offcanvas-header">
+            <button type="button" class="btn-close" id="profileOffcanvasCloseBtn"></button>
+        </div>
+        <div class="custom-offcanvas-body"></div>
+    </div>
+
+    <div class="list-offcanvas" id="list-offcanvas">
+        <div class="list-offcanvas-header">
+            <button type="button" class="btn-close" id="listOffcanvasCloseBtn"></button>
+        </div>
+        <div class="list-offcanvas-body p-3"></div>
+    </div>
+
+    <div class="overlay" id="overlay" ></div>
+</body>
 `;
 
 class Chat extends HTMLElement {
@@ -148,8 +310,15 @@ class Chat extends HTMLElement {
         // wpChatconversation.setAttribute('profile-pic', profilePic);
         
         // chatConversation.appendChild(wpChatconversation);
-        
-        
+
+        // console.log("profile pic " ,userProfilePic);
+
+        const userNmaeElement = this.shadowRoot.querySelector('.user-name');
+        userNmaeElement.textContent = username;
+
+        const userProfilePicElement = this.shadowRoot.querySelector('#user-image');
+        userProfilePicElement.src = "assets/after.png";
+
         // /// load the profile info
         // const profileElement = this.shadowRoot.querySelector('#user-profile');
         // profileElement.innerHTML = ``;
@@ -159,7 +328,7 @@ class Chat extends HTMLElement {
         // wpProfile.setAttribute('profile-pic', profilePic);
 
         // profileElement.appendChild(wpProfile);
-        
+        this.handleOverlayClick();
     }
     
     handleSearch(event)  {
@@ -182,9 +351,117 @@ class Chat extends HTMLElement {
         this.render();
         this.shadowRoot.addEventListener('memberClicked', this.handleMemberClick.bind(this));
         this.shadowRoot.querySelector('#convo-search').addEventListener('input', this.handleSearch.bind(this));
+
+        const profileIcon = this.shadowRoot.querySelector('.profile-icon');
+        profileIcon.addEventListener('click', this.handleProfileOffCanvas.bind(this));
+
+        const profileOffcanvasCloseBtn = this.shadowRoot.querySelector('#profileOffcanvasCloseBtn');
+        profileOffcanvasCloseBtn.addEventListener('click', this.handleProfileCloseOffcanvas.bind(this));
+        
+        const listOffcanvas = this.shadowRoot.querySelector('#list-icon-container');
+        listOffcanvas.addEventListener('click', this.handleListOffcanvas.bind(this));
+
+        const listOffCloseBtn = this.shadowRoot.querySelector('#listOffcanvasCloseBtn');
+
+        listOffCloseBtn.addEventListener('click', this.handlelistCloseOffcanvas.bind(this));
+
+        const overlay = this.shadowRoot.querySelector('#overlay');
+        overlay.addEventListener('click', this.handleOverlayClick.bind(this));
     }
     
+    handleListOffcanvas(event) {
+        const listOffcanvasBody = this.shadowRoot.querySelector('.list-offcanvas-body');
 
+        listOffcanvasBody.innerHTML = `
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <input type="search" id="offcanvas-search" class="form-control mb-3" placeholder="Search">
+             </div>
+        `;
+
+        const search = this.shadowRoot.querySelector('#offcanvas-search');
+        search.addEventListener('click', this.handleOffcanvasSearch.bind(this));
+
+        
+        this.convo_list_users.forEach(username => {
+            const memberElement = document.createElement('wp-chat-member');
+            memberElement.setAttribute('username', username);
+            memberElement.setAttribute('profile-pic', `assets/after.png`);
+            memberElement.setAttribute('last-message', 'hello there!');
+            listOffcanvasBody.appendChild(memberElement);
+        });
+        
+        const listOffcanvas = this.shadowRoot.querySelector('#list-offcanvas');
+        listOffcanvas.classList.add('show');
+        this.showOverlay();
+    }
+    
+    handleOffcanvasSearch(event) {
+        
+        // need to be fixed ;
+        const searchQuery = event.target.value.toLowerCase();
+        console.log("search ::", searchQuery);
+
+        const membersContainer = this.shadowRoot.querySelector('.list-offcanvas-body');
+        const members = this.shadowRoot.querySelectorAll('wp-chat-member');
+    
+        this.convo_list_users.forEach(username => {
+            const member = members.item(this.convo_list_users.indexOf(username));
+
+            if (username.toLowerCase().includes(searchQuery)) {
+                member.classList.remove('d-none');
+            } else {
+                member.classList.add('d-none');
+            }
+        });
+
+    }
+
+    handleProfileCloseOffcanvas(event) {
+        const offcanvas = this.shadowRoot.querySelector('#profileOffcanvas');
+        offcanvas.classList.remove('show');
+        this.hideOverlay();
+    }
+
+    handlelistCloseOffcanvas(event) {
+        const listOffcanvas = this.shadowRoot.querySelector('#list-offcanvas');
+        listOffcanvas.classList.remove('show');
+        this.hideOverlay();
+    }
+
+    handleProfileOffCanvas(event) {
+        const username = this.convo_list_users[1];
+		const profilePic = "assets/after.png";
+
+        console.log(username);
+        const cprofileOffcanvasBody = this.shadowRoot.querySelector('.custom-offcanvas-body');
+        cprofileOffcanvasBody.innerHTML = ``;
+
+        const wpProfile = document.createElement('wp-chat-profile');
+        wpProfile.setAttribute('username', username);
+        wpProfile.setAttribute('profile-pic', profilePic);
+        
+        cprofileOffcanvasBody.appendChild(wpProfile);
+
+        const profileOffcanvas = this.shadowRoot.querySelector('#profileOffcanvas');
+        profileOffcanvas.classList.add('show');
+        this.showOverlay();
+    }
+
+    showOverlay() {
+        const overlay = this.shadowRoot.querySelector('.overlay');
+        overlay.classList.add('show');
+    }
+    hideOverlay() {
+        const overlay = this.shadowRoot.querySelector('.overlay');
+        overlay.classList.remove('show');
+    }
+    handleOverlayClick() {
+        this.handleProfileCloseOffcanvas();
+        this.handlelistCloseOffcanvas();
+    }
     render() {
         const membersContainer = this.shadowRoot.querySelector('.members_container');
         
@@ -192,8 +469,9 @@ class Chat extends HTMLElement {
         //// for test
         const username = "mohhamed";
         const profilePic = "assets/after.png";
+
         const chatConversation = this.shadowRoot.querySelector('#convo-messages');
-        chatConversation.innerHTML = ``;
+
         const wpChatconversation = document.createElement('wp-chat-conversation');
         
         wpChatconversation.setAttribute('username', username);
@@ -247,9 +525,12 @@ chatMemberTemplate.innerHTML = /*html*/ `
             padding: 1em;
             cursor: pointer;
             border-bottom: 1px solid #e9ecef;
+            border-radius: 4px;
         }
-        .member:hover, .member.active {
-            background-color: #e0e0e0;
+        .member:hover, .member.active{
+            background-color: #ffa429;
+            color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .profile-pic {
@@ -380,18 +661,6 @@ ConversationTemplate.innerHTML = /*html*/ `
             height: 100%;
         }
         
-        .profile-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-right: 14px;
-            overflow: hidden;
-        }
-        .user-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
         #conversation {
             display: flex;
             flex-direction: column;
@@ -441,17 +710,6 @@ ConversationTemplate.innerHTML = /*html*/ `
             color: #6c757d;
         }
 
-        .member {
-            display: flex;
-            align-items: center;
-            padding: 1em;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .user-info {
-            font-weight: bold;
-        }
-
         .add-image-icon {
             cursor: pointer;
             width: 25px;
@@ -464,6 +722,7 @@ ConversationTemplate.innerHTML = /*html*/ `
             height: 25px;
             display: none;
         }
+
         #send-btn-icon.visible {
             display: block;
         }
@@ -472,13 +731,10 @@ ConversationTemplate.innerHTML = /*html*/ `
             display: none;
         }
         
-
-
         .custom-offcanvas {
             position: fixed;
             top: 0;
-            right: -100%;
-            width: 400px;
+            right: -200%;
             height: 100%;
             background-color: #fff;
             transition: right 0.3s ease-in-out;
@@ -490,89 +746,44 @@ ConversationTemplate.innerHTML = /*html*/ `
             right: 0;
         }
 
-        .custom-offcanvas-header {
+        .list-offcanvas.show {
+            left: 0;
+        }
+
+        .profile-offcanvas-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .list-offcanvas-header {
             padding: 1rem;
             border-bottom: 1px solid #dee2e6;
         }
 
         .custom-offcanvas-body {
-            padding: 1rem;
         }
 
-        .custom-offcanvas-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            display: none;
-            z-index: 999;
+        #profileOffcanvas {
+            overflow-y: auto;
+            border-top-left-radius: 14px;
         }
+        
 
-        .custom-offcanvas-backdrop.show {
-            display: block;
-        }
-
-        @media (max-width: 992px) {
-            .profile-icon-container {
-                display: block;
-                position: absolute;
-                right: 1%;
-                cursor: pointer;
-            }
-            .profile-icon-container .profile-icon {
-                width:  25px;
-                height: 25px;
-            }
-        }
 
     </style>
     </head>
     <body>
         <div id="conversation">
-            <div id="convo-header">
-                <div class="member">
-                    <div class="profile-pic">
-                        <img class="user-image" src="/api/placeholder/50/50" alt="profile picture" class="img-fluid">
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">username</div>
-                    </div>
-                    <div class="profile-icon-container">
-                        <svg class="profile-icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve" width="512" height="512">
-                        <g>
-                            <circle cx="256" cy="53.333" r="53.333"/>
-                            <circle cx="256" cy="256" r="53.333"/>
-                            <circle cx="256" cy="458.667" r="53.333"/>
-                        </g>
-                    </div>
-                </div>
-            </div>
-            
             <div id="convo-messages-container" class="p-3"> this is the messages</div>
-
             <div id="input-message-container">
-                    <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                        <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z"/>
-                    </svg>
-                <input id="message-input" type="text" placeholder="Type a message">
-                <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z"/>
+                <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
+                    <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z"/>
                 </svg>
+                <input id="message-input" type="text" placeholder="Type a message">
+                <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z"/></svg>
             </div>
         </div>
         
-            
-        <div class="custom-offcanvas p-3" id="customOffcanvas">
-            <div class="custom-offcanvas-header">
-                <button type="button" class="btn-close" id="offcanvasCloseBtn"></button>
-            </div>
-            <div class="custom-offcanvas-body"></div>
-        </div>
-
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-        
-        </body>
+    </body>
 </html>
 `;
 
@@ -587,37 +798,8 @@ class Conversation extends HTMLElement {
 
 	connectedCallback() {
 		this.render();
-
-        const profileIcon = this.shadowRoot.querySelector('.profile-icon');
         this.shadowRoot.querySelector('#message-input').addEventListener('input', this.handleMessage.bind(this));
-        profileIcon.addEventListener('click', this.handleOffCanvas.bind(this));
-
-        const offcanvasCloseBtn = this.shadowRoot.querySelector('#offcanvasCloseBtn');
-        offcanvasCloseBtn.addEventListener('click', this.handleCloseOffcanvas.bind(this));
 	}
-
-    handleCloseOffcanvas(event) {
-        const offcanvas = this.shadowRoot.querySelector('#customOffcanvas');
-        offcanvas.classList.remove('show');
-    }
-
-    handleOffCanvas(event) {
-
-        const username = this.getAttribute('username' || 'Unknown User');
-		const profilePic = this.getAttribute('profile-pic');
-
-        const customOffcanvasBody = this.shadowRoot.querySelector('.custom-offcanvas-body');
-        customOffcanvasBody.innerHTML = ``;
-
-        const wpProfile = document.createElement('wp-chat-profile');
-        wpProfile.setAttribute('username', username);
-        wpProfile.setAttribute('profile-pic', profilePic);
-        
-        customOffcanvasBody.appendChild(wpProfile);
-
-        const offcanvas = this.shadowRoot.querySelector('#customOffcanvas');
-        offcanvas.classList.add('show');
-    }
 
     handleMessage(event) {
         const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
@@ -637,12 +819,6 @@ class Conversation extends HTMLElement {
         const userProfilePic = this.getAttribute('profile-pic');
 
         // console.log("profile pic " ,userProfilePic);
-
-        const userNmaeElement = this.shadowRoot.querySelector('.user-name');
-        userNmaeElement.textContent = username;
-
-        const userProfilePicElement = this.shadowRoot.querySelector('.user-image');
-        userProfilePicElement.src = userProfilePic;
 
         const userMessages = this.shadowRoot.querySelector('#convo-messages-container');
         userMessages.textContent = '';
@@ -666,7 +842,6 @@ profileTemplate.innerHTML = /*html*/ `
         
         :host {
             display: block;
-            height: 100%;
         }
         
     .profile-container {
@@ -674,6 +849,7 @@ profileTemplate.innerHTML = /*html*/ `
         flex-direction: column;
         gap: 1em;
         height: 100%;
+        width: 100%;
         overflow-y: auto;
     }
 
@@ -682,14 +858,12 @@ profileTemplate.innerHTML = /*html*/ `
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 300px;
-        height: 300px;
         background-color: #e0e0e0;
         border-radius: 14px;
     }
     .user-image {
-        width: 200px;
-        height: 200px;
+        width:  150px;
+        height: 150px;
         border-radius: 50%;
         object-fit: cover;
     }
@@ -705,12 +879,12 @@ profileTemplate.innerHTML = /*html*/ `
     }
 
     </style>
-    <div class="profile-container p-3">
+    <div class="profile-container p-4">
         <div class="profile-header">
             <h3 >Profile info</h3>
         </div>
         
-        <div class="profile-pic">
+        <div class="profile-pic p-3">
             <img class="user-image" src="/api/placeholder/50/50" alt="profile picture">
             <h4 class="user-name"></h4>
         </div>
@@ -738,10 +912,34 @@ class Profile extends HTMLElement {
         const userProfileInfo = this.shadowRoot.querySelector('#user-profile-info');
         const wp_userProfileInfo = document.createElement('wp-card');
         
-        for (let i = 0; i < 4; ++i) {
-            const mem = document.createElement('wp-card');
-            userProfileInfo.appendChild(mem);
-        }
+        
+        
+        // set username
+        const wp_card = document.createElement('wp-card');
+        const userNameIcon = "assets/circle-user.svg";
+        const userName = this.getAttribute('username');
+        wp_card.setAttribute('svg-path', userNameIcon);
+        wp_card.setAttribute('header', "username");
+        wp_card.setAttribute('body', userName);
+        userProfileInfo.appendChild(wp_card);
+        
+        // set phone number
+        const phoneNUmberIcon = "assets/phone.svg";
+        const phone = "06365489752"; //this.getAttribute('phonenumber');
+        const wp_phone = document.createElement('wp-card');
+        wp_phone.setAttribute('svg-path', phoneNUmberIcon);
+        wp_phone.setAttribute('header', "Phone number");
+        wp_phone.setAttribute('body', phone);
+        userProfileInfo.appendChild(wp_phone);
+        
+        // set description
+        const descriptionIcon = "assets/description.svg";
+        const description = "this is a description ..."; //this.getAttribute('description');
+        const wp_description = document.createElement('wp-card');
+        wp_description.setAttribute('svg-path', descriptionIcon);
+        wp_description.setAttribute('header', "Description");
+        wp_description.setAttribute('body', description);
+        userProfileInfo.appendChild(wp_description);
 
     
         const userImageElement = this.shadowRoot.querySelector('.user-image');
@@ -781,20 +979,24 @@ cardTemplate.innerHTML = /*html*/ `
             height: 15px;
         }
         
-        .card-body-container {
-            margin-left: 0.5em;
+        .body-container {
             display: flex;
-            gap: 10px;
-            justify-content: start;
+            flex-direction: row;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .card-header {
+            font-weight: bold;
         }
 
     </style>
     <div id="card-container">
         <div class="card-header">
-            <h5> Header </h5>
+            <p> Header </p>
         </div>
-        <div class="card-body-container">
-            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m16,23.314c-1.252.444-2.598.686-4,.686s-2.748-.242-4-.686v-2.314c0-2.206,1.794-4,4-4s4,1.794,4,4v2.314ZM12,7c-1.103,0-2,.897-2,2s.897,2,2,2,2-.897,2-2-.897-2-2-2Zm12,5c0,4.433-2.416,8.311-6,10.389v-1.389c0-3.309-2.691-6-6-6s-6,2.691-6,6v1.389C2.416,20.311,0,16.433,0,12,0,5.383,5.383,0,12,0s12,5.383,12,12Zm-8-3c0-2.206-1.794-4-4-4s-4,1.794-4,4,1.794,4,4,4,4-1.794,4-4Z"/></svg>
+        <div class="body-container">
+            <img class="card-icon" src="list.svg" alt="svg">
             <p id="card-body">this is the body </p>
         </div>
     </div>
@@ -813,11 +1015,21 @@ class Card extends HTMLElement {
     }
     
     render() {
+        const svgPath = this.getAttribute('svg-path');
+        const icon = this.shadowRoot.querySelector('.card-icon');
+        icon.src = svgPath;
+
+        
+        const header = this.shadowRoot.querySelector('.card-header');
+        header.textContent = this.getAttribute('header');
+
+        const body = this.shadowRoot.querySelector('#card-body');
+        body.textContent = this.getAttribute('body');
        
     }
     
     static get observedAttributes() {
-        return ['username', 'profile-pic', 'last-message'];
+        return ['username', 'profile-pic', 'svg-path'];
     }
     
 }
@@ -834,7 +1046,7 @@ messageTemplate.innerHTML = /*html*/ `
 			display: flex;
 		}
 		.message {
-			background-color: #282c34;
+			background-color: #18d39e;
 			color: white;
 			padding: 10px 12px;
 			border-radius: 7.5px;
@@ -892,5 +1104,4 @@ customElements.define("wp-chat-conversation", Conversation);
 customElements.define("wp-chat-profile", Profile);
 customElements.define("wp-card", Card);
 customElements.define("wp-message", Message);
-
 
