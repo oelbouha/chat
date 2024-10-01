@@ -38,7 +38,7 @@ template.innerHTML = /*html*/`
         transition: width 0.3s ease;
     }
 
-    .members_container {
+    .members-container {
         overflow-y: auto;
         max-height: calc(100vh - 120px);
     }
@@ -184,6 +184,15 @@ template.innerHTML = /*html*/`
         
         }
 
+        #user-profile, #convo-header{
+            display: none;
+        }
+
+        #chat-conversation {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+        }
     @media (max-width: 1200px) {
         #user-profile {
             display: none !important    
@@ -206,8 +215,8 @@ template.innerHTML = /*html*/`
         }
         #list-icon-container .list-icon, .profile-icon-container .profile-icon {
             display: initial !important;
-            width: 30px;
-            height: 30px;
+            width:  25px;
+            height: 25px;
         }
     }
 </style>
@@ -223,7 +232,7 @@ template.innerHTML = /*html*/`
                     </svg>
                     <input type="search" id="convo-search" class="form-control mb-3" placeholder="Search">
                 </div>
-                <div class="members_container"></div>
+                <div class="members-container"></div>
             </div>
 
             <div id="convo-messages">
@@ -248,10 +257,11 @@ template.innerHTML = /*html*/`
                             </div>
                             </div>
                             <div class="profile-icon-container p-2">
-                                <img class="profile-icon" src="assets/circle-user.svg" >
+                                <img class="profile-icon" src="assets/portrait.svg" >
                             </div>
                         </div>
                 </div>
+                <div id="chat-conversation"> </div>
             </div>
             
             <div id="user-profile"></div>
@@ -269,7 +279,14 @@ template.innerHTML = /*html*/`
         <div class="list-offcanvas-header">
             <button type="button" class="btn-close" id="listOffcanvasCloseBtn"></button>
         </div>
-        <div class="list-offcanvas-body p-3"></div>
+        <div id="list-offcanvas-body" class="p-3">
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <input type="search" id="offcanvas-search" class="form-control mb-3" placeholder="Search">
+            </div>
+        </div>
     </div>
 
     <div class="overlay" id="overlay" ></div>
@@ -286,6 +303,7 @@ class Chat extends HTMLElement {
 
         this.convo_list_users = ['bob', 'mohamed', 'ahmed', 'zohair']; 
         this.activeMember = null;
+        this.isActive = false;
     }
 
     handleMemberClick(event) {
@@ -302,47 +320,59 @@ class Chat extends HTMLElement {
 
         
         // load the conversation
-        // const chatConversation = this.shadowRoot.querySelector('#convo-messages');
-        // chatConversation.innerHTML = ``;
-        // const wpChatconversation = document.createElement('wp-chat-conversation');
+        const conversationBody = this.shadowRoot.querySelector('#convo-messages');
+
+        // convoHeader.style.display = 'block';
+
+        const chatConversation = this.shadowRoot.querySelector('#convo-messages');
+        const convoHeader = chatConversation.querySelector('#convo-header');
+        convoHeader.style.display = 'block';
+
+        const userProfileImg = convoHeader.querySelector('#user-image');
+        userProfileImg.src = profilePic;
+        const userName = convoHeader.querySelector('.user-name');
+        userName.textContent = username;
+        const conversation = chatConversation.querySelector('#chat-conversation');
+        conversation.innerHTML = ``;
+        const wpChatconversation = document.createElement('wp-chat-conversation');
+
+        wpChatconversation.setAttribute('username', username);
+        wpChatconversation.setAttribute('profile-pic', profilePic);
+        conversation.appendChild(wpChatconversation);
         
-        // wpChatconversation.setAttribute('username', username);
-        // wpChatconversation.setAttribute('profile-pic', profilePic);
+
+
+        // const userNmaeElement = this.shadowRoot.querySelector('.user-name');
+        // userNmaeElement.textContent = username;
+
+        // const userProfilePicElement = this.shadowRoot.querySelector('#user-image');
+        // userProfilePicElement.src = "assets/after.png";
+
         
-        // chatConversation.appendChild(wpChatconversation);
-
-        // console.log("profile pic " ,userProfilePic);
-
-        const userNmaeElement = this.shadowRoot.querySelector('.user-name');
-        userNmaeElement.textContent = username;
-
-        const userProfilePicElement = this.shadowRoot.querySelector('#user-image');
-        userProfilePicElement.src = "assets/after.png";
-
         // /// load the profile info
-        // const profileElement = this.shadowRoot.querySelector('#user-profile');
-        // profileElement.innerHTML = ``;
-        // const wpProfile = document.createElement('wp-chat-profile');
-        
-        // wpProfile.setAttribute('username', username);
-        // wpProfile.setAttribute('profile-pic', profilePic);
+        const userProfile = this.shadowRoot.querySelector('#user-profile');
+        userProfile.style.display = 'block';
+        userProfile.innerHTML = ``;
+        const wpProfile = document.createElement('wp-chat-profile');
+        wpProfile.setAttribute('username', username);
+        wpProfile.setAttribute('profile-pic', profilePic);
+        userProfile.appendChild(wpProfile);
 
-        // profileElement.appendChild(wpProfile);
+
         this.handleOverlayClick();
     }
     
     handleSearch(event)  {
         const searchQuery = event.target.value.toLowerCase();
-        const membersContainer = this.shadowRoot.querySelector('.members_container');
-        const members = this.shadowRoot.querySelectorAll('wp-chat-member');
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        const members = membersContainer.querySelectorAll('wp-chat-member');
     
-        this.convo_list_users.forEach(username => {
-            const member = members.item(this.convo_list_users.indexOf(username));
-
-            if (username.toLowerCase().includes(searchQuery)) {
-                member.classList.remove('d-none');
+        members.forEach(member => {
+            const username = member.getAttribute('username').toLowerCase();
+            if (username.includes(searchQuery)) {
+                member.style.display = '';
             } else {
-                member.classList.add('d-none');
+                member.style.display = 'none';
             }
         });
     }
@@ -350,7 +380,9 @@ class Chat extends HTMLElement {
     connectedCallback() {
         this.render();
         this.shadowRoot.addEventListener('memberClicked', this.handleMemberClick.bind(this));
-        this.shadowRoot.querySelector('#convo-search').addEventListener('input', this.handleSearch.bind(this));
+        
+        const mainSearch = this.shadowRoot.querySelector('#convo-search');
+        mainSearch.addEventListener('input', this.handleSearch.bind(this));
 
         const profileIcon = this.shadowRoot.querySelector('.profile-icon');
         profileIcon.addEventListener('click', this.handleProfileOffCanvas.bind(this));
@@ -362,61 +394,51 @@ class Chat extends HTMLElement {
         listOffcanvas.addEventListener('click', this.handleListOffcanvas.bind(this));
 
         const listOffCloseBtn = this.shadowRoot.querySelector('#listOffcanvasCloseBtn');
-
         listOffCloseBtn.addEventListener('click', this.handlelistCloseOffcanvas.bind(this));
 
         const overlay = this.shadowRoot.querySelector('#overlay');
         overlay.addEventListener('click', this.handleOverlayClick.bind(this));
+
+        const offcanvasSearch = this.shadowRoot.querySelector('#offcanvas-search');
+        offcanvasSearch.addEventListener('input', this.handleOffcanvasSearch.bind(this));
     }
     
     handleListOffcanvas(event) {
-        const listOffcanvasBody = this.shadowRoot.querySelector('.list-offcanvas-body');
-
-        listOffcanvasBody.innerHTML = `
-            <div class="search-container">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <input type="search" id="offcanvas-search" class="form-control mb-3" placeholder="Search">
-             </div>
-        `;
-
-        const search = this.shadowRoot.querySelector('#offcanvas-search');
-        search.addEventListener('click', this.handleOffcanvasSearch.bind(this));
-
+        const listOffcanvasBody = this.shadowRoot.querySelector('#list-offcanvas-body');
         
-        this.convo_list_users.forEach(username => {
-            const memberElement = document.createElement('wp-chat-member');
-            memberElement.setAttribute('username', username);
-            memberElement.setAttribute('profile-pic', `assets/after.png`);
-            memberElement.setAttribute('last-message', 'hello there!');
-            listOffcanvasBody.appendChild(memberElement);
-        });
-        
+        if (this.isActive == false)  {
+            this.convo_list_users.forEach(username => {
+                const memberElement = document.createElement('wp-chat-member');
+                memberElement.setAttribute('username', username);
+                memberElement.setAttribute('profile-pic', `assets/after.png`);
+                memberElement.setAttribute('last-message', 'hello there!');
+                listOffcanvasBody.appendChild(memberElement);
+                this.isActive = true;
+            });
+        }
+
+            
         const listOffcanvas = this.shadowRoot.querySelector('#list-offcanvas');
         listOffcanvas.classList.add('show');
         this.showOverlay();
     }
     
     handleOffcanvasSearch(event) {
-        
         // need to be fixed ;
         const searchQuery = event.target.value.toLowerCase();
         console.log("search ::", searchQuery);
 
-        const membersContainer = this.shadowRoot.querySelector('.list-offcanvas-body');
-        const members = this.shadowRoot.querySelectorAll('wp-chat-member');
+        const membersContainer = this.shadowRoot.querySelector('#list-offcanvas-body');
+        const members = membersContainer.querySelectorAll('wp-chat-member');
     
-        this.convo_list_users.forEach(username => {
-            const member = members.item(this.convo_list_users.indexOf(username));
-
-            if (username.toLowerCase().includes(searchQuery)) {
-                member.classList.remove('d-none');
+        members.forEach(member => {
+            const username = member.getAttribute('username').toLowerCase();
+            if (username.includes(searchQuery)) {
+                member.style.display = '';
             } else {
-                member.classList.add('d-none');
+                member.style.display = 'none';
             }
         });
-
     }
 
     handleProfileCloseOffcanvas(event) {
@@ -462,35 +484,14 @@ class Chat extends HTMLElement {
         this.handleProfileCloseOffcanvas();
         this.handlelistCloseOffcanvas();
     }
-    render() {
-        const membersContainer = this.shadowRoot.querySelector('.members_container');
-        
 
+
+    render() {
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        
         //// for test
         const username = "mohhamed";
         const profilePic = "assets/after.png";
-
-        const chatConversation = this.shadowRoot.querySelector('#convo-messages');
-
-        const wpChatconversation = document.createElement('wp-chat-conversation');
-        
-        wpChatconversation.setAttribute('username', username);
-        wpChatconversation.setAttribute('profile-pic', profilePic);
-        
-        chatConversation.appendChild(wpChatconversation);
-        
-        
-        /// load the profile info
-        const profileElement = this.shadowRoot.querySelector('#user-profile');
-        // profileElement.innerHTML = ``;
-        const wpProfile = document.createElement('wp-chat-profile');
-        
-        wpProfile.setAttribute('username', username);
-        wpProfile.setAttribute('profile-pic', profilePic);
-
-        profileElement.appendChild(wpProfile);
-        /////
-
 
         this.convo_list_users.forEach(username => {
             const memberElement = document.createElement('wp-chat-member');
@@ -522,13 +523,14 @@ chatMemberTemplate.innerHTML = /*html*/ `
         .member {
             display: flex;
             flex-direction: row;
+            alignitems: center;
             padding: 1em;
             cursor: pointer;
             border-bottom: 1px solid #e9ecef;
             border-radius: 4px;
         }
-        .member:hover, .member.active{
-            background-color: #ffa429;
+        .member:hover, .member.active {
+            background-color: #18d39e;
             color: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -550,7 +552,6 @@ chatMemberTemplate.innerHTML = /*html*/ `
 
         .user-name {
             font-weight: bold;
-            margin-bottom: 2px;
         }
 
         .last-message {
