@@ -14,8 +14,8 @@ template.innerHTML = /*html*/`
     }
 
     #convo-list {
-        width: 300px;
-        min-width: 250px;
+        width: 400px;
+        min-width: 300px;
         background-color: #f8f9fa;
         border-right: 1px solid #dee2e6;
         transition: width 0.3s ease;
@@ -128,6 +128,7 @@ template.innerHTML = /*html*/`
             z-index: 1000;
             box-shadow: -2px 0 5px rgba(0,0,0,0.1);
         }
+
         .list-offcanvas {
             position: fixed;
             top: 0;
@@ -152,6 +153,7 @@ template.innerHTML = /*html*/`
             padding: 1rem;
             border-bottom: 1px solid #dee2e6;
         }
+
         .list-offcanvas-header {
             padding: 1rem;
             border-bottom: 1px solid #dee2e6;
@@ -191,8 +193,59 @@ template.innerHTML = /*html*/`
         #chat-conversation {
             width: 100%;
             height: 100%;
+            background-color: #e0e0e0;
             overflow-y: auto;
         }
+
+
+        #input-message-container {
+            display: none;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            padding: 0.5em;
+            box-sizing: border-box;
+        }
+        
+        #message-input {
+            flex-grow: 1;
+            margin: 0 10px;
+            border-radius: 8px;
+            border: 1.5px solid #dee2e6;;
+            background-color: none;
+            padding: 0.5em;
+        }
+
+        #message-input:focus {
+            outline: none;
+            border-color: #ccc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .last-message {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+
+        .add-image-icon {
+            cursor: pointer;
+            width: 25px;
+            height: 25px;
+        }
+
+        #send-btn-icon {
+            cursor: pointer;
+            width:  25px;
+            height: 25px;
+            display: none;
+        }
+
+        #send-btn-icon.visible {
+            display: block;
+        }
+
+
     @media (max-width: 1200px) {
         #user-profile {
             display: none !important    
@@ -262,6 +315,13 @@ template.innerHTML = /*html*/`
                         </div>
                 </div>
                 <div id="chat-conversation"> </div>
+                <div id="input-message-container">
+                    <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
+                        <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z"/>
+                    </svg>
+                    <input id="message-input" type="text" placeholder="Type a message">
+                    <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z"/></svg>
+                </div>
             </div>
             
             <div id="user-profile"></div>
@@ -318,15 +378,15 @@ class Chat extends HTMLElement {
         mem.activate();
         this.activeMember = mem;
 
-        
-        // load the conversation
+        //  handle the conversation part
         const conversationBody = this.shadowRoot.querySelector('#convo-messages');
-
-        // convoHeader.style.display = 'block';
 
         const chatConversation = this.shadowRoot.querySelector('#convo-messages');
         const convoHeader = chatConversation.querySelector('#convo-header');
         convoHeader.style.display = 'block';
+
+        const inputMessage = chatConversation.querySelector('#input-message-container');
+        inputMessage.style.display = `flex`;
 
         const userProfileImg = convoHeader.querySelector('#user-image');
         userProfileImg.src = profilePic;
@@ -340,15 +400,6 @@ class Chat extends HTMLElement {
         wpChatconversation.setAttribute('profile-pic', profilePic);
         conversation.appendChild(wpChatconversation);
         
-
-
-        // const userNmaeElement = this.shadowRoot.querySelector('.user-name');
-        // userNmaeElement.textContent = username;
-
-        // const userProfilePicElement = this.shadowRoot.querySelector('#user-image');
-        // userProfilePicElement.src = "assets/after.png";
-
-        
         // /// load the profile info
         const userProfile = this.shadowRoot.querySelector('#user-profile');
         userProfile.style.display = 'block';
@@ -358,10 +409,34 @@ class Chat extends HTMLElement {
         wpProfile.setAttribute('profile-pic', profilePic);
         userProfile.appendChild(wpProfile);
 
-
+        // close overlay
         this.handleOverlayClick();
     }
     
+    handleMessage(event) {
+        const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
+        
+        const message = event.target.value;
+        if (message) {
+            sendBtnIcon.classList.add('visible');
+        }
+        else {
+            sendBtnIcon.classList.remove('visible');
+        }
+    }
+    
+    sendMessage(event) {
+        const input = this.shadowRoot.querySelector('#message-input');
+        const message = input.value;
+        input.value = "";
+        input.focus();
+
+        const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
+        if (conversation) {
+            conversation.addMessage(message, 'user');
+        }
+    }
+
     handleSearch(event)  {
         const searchQuery = event.target.value.toLowerCase();
         const membersContainer = this.shadowRoot.querySelector('.members-container');
@@ -401,8 +476,20 @@ class Chat extends HTMLElement {
 
         const offcanvasSearch = this.shadowRoot.querySelector('#offcanvas-search');
         offcanvasSearch.addEventListener('input', this.handleOffcanvasSearch.bind(this));
+
+
+        const inputMessage = this.shadowRoot.querySelector('#message-input');
+        inputMessage.addEventListener('input', this.handleMessage.bind(this));
+        inputMessage.addEventListener('keypress', this.handleKeyPress.bind(this));
+
+        const sendBtn = this.shadowRoot.querySelector('#send-btn-icon');
+        sendBtn.addEventListener('click', this.sendMessage.bind(this));
     }
     
+    handleKeyPress(event) {
+            if (event.key == "Enter")
+                this.sendMessage(event);
+    }
     handleListOffcanvas(event) {
         const listOffcanvasBody = this.shadowRoot.querySelector('#list-offcanvas-body');
         
@@ -593,11 +680,17 @@ class chatMember extends HTMLElement {
 	}
 
 	updateStyle() {
+        const lastMessageElement = this.shadowRoot.querySelector('.member').querySelector('.last-message');
+        
 		const member = this.shadowRoot.querySelector('.member');
-		if (this.isActive)
-			member.classList.add('active');
-		else
-			member.classList.remove('active');
+		if (this.isActive) {
+            member.classList.add('active');
+            lastMessageElement.style["color"] = `white`;
+        }
+        else {
+            member.classList.remove('active');
+            lastMessageElement.style["color"] = `#6c757d`;
+        }
 	}
 
 	handleClick() {
@@ -660,128 +753,55 @@ ConversationTemplate.innerHTML = /*html*/ `
         :host {
             display: block;
             height: 100%;
+            width: 100%;
         }
         
-        #conversation {
+        .message {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            margin-bottom: 15px;
         }
 
-        #convo-header {
-            flex: 0 0 auto;
-            height: 5em;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        #convo-messages-container {
-            flex: 1 1 auto;
+        #conversation {
             overflow-y: auto;
-            padding-bottom: 4em; /* Make room for the input container */
         }
         
-        #input-message-container {
-            flex: 0 0 auto;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-            padding: 0.5em;
-            box-sizing: border-box;
-        }
-        
-        #message-input {
-            flex-grow: 1;
-            margin: 0 10px;
-            border-radius: 8px;
-            border: 1.5px solid #dee2e6;;
-            background-color: none;
-            padding: 0.5em;
-        }
-        #message-input:focus {
-            outline: none;
-            border-color: #ccc;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        .message-content {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            background-color: red;
         }
 
-        .last-message {
-            font-size: 0.8em;
-            color: #6c757d;
+        .user-message {
+            align-items: flex-end;
+        }
+        .user-message .message-content {
+            background-color: #18d39e;
+            color: #fff;
+            border-bottom-right-radius: 2px;
         }
 
-        .add-image-icon {
-            cursor: pointer;
-            width: 25px;
-            height: 25px;
+        .client-message {
+            align-items: flex-start;
+        }
+        .client-message .message-content {
+            background-color: #e9e9eb;
+            color: #000;
+            border-bottom-left-radius: 4px;
         }
 
-        #send-btn-icon {
-            cursor: pointer;
-            width:  25px;
-            height: 25px;
-            display: none;
+        .message-time {
+            font-size: 12px;
+            color: #888;
         }
-
-        #send-btn-icon.visible {
-            display: block;
-        }
-
-        .profile-icon-container {
-            display: none;
-        }
-        
-        .custom-offcanvas {
-            position: fixed;
-            top: 0;
-            right: -200%;
-            height: 100%;
-            background-color: #fff;
-            transition: right 0.3s ease-in-out;
-            z-index: 1000;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-        }
-
-        .custom-offcanvas.show {
-            right: 0;
-        }
-
-        .list-offcanvas.show {
-            left: 0;
-        }
-
-        .profile-offcanvas-header {
-            padding: 1rem;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .list-offcanvas-header {
-            padding: 1rem;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .custom-offcanvas-body {
-        }
-
-        #profileOffcanvas {
-            overflow-y: auto;
-            border-top-left-radius: 14px;
-        }
-        
-
 
     </style>
     </head>
     <body>
-        <div id="conversation">
-            <div id="convo-messages-container" class="p-3"> this is the messages</div>
-            <div id="input-message-container">
-                <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                    <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z"/>
-                </svg>
-                <input id="message-input" type="text" placeholder="Type a message">
-                <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512"><path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z"/></svg>
-            </div>
+        <div id="conversation" class="p-3">
         </div>
         
     </body>
@@ -799,32 +819,59 @@ class Conversation extends HTMLElement {
 
 	connectedCallback() {
 		this.render();
-        this.shadowRoot.querySelector('#message-input').addEventListener('input', this.handleMessage.bind(this));
+        
 	}
 
-    handleMessage(event) {
-        const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
+    addMessage(message, user) {
+        const conversation = this.shadowRoot.querySelector('#conversation');
 
-        const message = event.target.value;
-        if (message) {
-            sendBtnIcon.classList.add('visible');
-        }
-        else {
-            sendBtnIcon.classList.remove('visible');
-        }
+        const userMessageContainer = document.createElement('div');
+        userMessageContainer.setAttribute('class',"message user-message");
+        
+        const userMessage = document.createElement('div');
+        userMessage.setAttribute('class', 'message-content');
+        userMessage.textContent = message;
+       
+        const userMessageTime = document.createElement('div');
+        userMessageTime.setAttribute('class', 'message-time');
+        userMessageTime.textContent = "10:30AM";
+        
+        
+        userMessageContainer.appendChild(userMessage);
+        userMessageContainer.appendChild(userMessageTime);
+        conversation.appendChild(userMessageContainer);
+        
+        const clientMessageContainer = document.createElement('div');
+        clientMessageContainer.setAttribute('class',"message client-message");
+        const clientMessage = document.createElement('div');
+        clientMessage.setAttribute('class', 'message-content');
+        clientMessage.textContent = message;
+        
+        const clientMessageTime = document.createElement('div');
+        clientMessageTime.setAttribute('class', 'message-time');
+        clientMessageTime.textContent = "10:30AM";
 
+        clientMessageContainer.appendChild(clientMessage);
+        clientMessageContainer.appendChild(clientMessageTime);
+        conversation.appendChild(clientMessageContainer);
+        this.scrollToBottom();
     }
+
+
 
 	render() {
         const username = this.getAttribute('username');
         const userProfilePic = this.getAttribute('profile-pic');
 
-        // console.log("profile pic " ,userProfilePic);
-
-        const userMessages = this.shadowRoot.querySelector('#convo-messages-container');
-        userMessages.textContent = '';
-        const wp_message = document.createElement('wp-message');
-        userMessages.appendChild(wp_message);
+        // const userMessages = this.shadowRoot.querySelector('#user-messages-container');
+        // userMessages.textContent = '';
+        // const wp_message = document.createElement('wp-message');
+        // userMessages.appendChild(wp_message);
+        
+        // const clientMessage = this.shadowRoot.querySelector('#client-messages-container');
+        // clientMessage.textContent = '';
+        // const wp = document.createElement('wp-message');
+        // clientMessage.appendChild(wp);
 	}
 
     static get observedAttributes() {
@@ -855,11 +902,12 @@ profileTemplate.innerHTML = /*html*/ `
     }
 
     .profile-pic {
+        color: white;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background-color: #e0e0e0;
+        background-color: #18d39e;
         border-radius: 14px;
     }
     .user-image {
@@ -875,7 +923,8 @@ profileTemplate.innerHTML = /*html*/ `
     }
 
     #user-profile-info {
-        background-color: #e0e0e0;
+        color: white;
+        background-color: #18d39e;
         border-radius: 14px;
     }
 
@@ -967,6 +1016,7 @@ cardTemplate.innerHTML = /*html*/ `
         :host {
             display: block;
             width: 100%;
+            height: 100%;
         }
         
         #card-container {
