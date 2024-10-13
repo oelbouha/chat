@@ -29,6 +29,7 @@ userMessageTemplate.innerHTML = /*html*/ `
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
+            gap: 5px;
             min-width: 70px;
         }
 
@@ -104,7 +105,7 @@ export class userMessage extends HTMLElement {
         userElement.style.display = 'flex';
 	}
 
-    setMessage(message, time) {
+    setMessage(message) {
         
         const user = this.getAttribute("user");
 
@@ -115,17 +116,18 @@ export class userMessage extends HTMLElement {
         userMessage.textContent = message;
         
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
-        userMessageTime.textContent = time;
+        userMessageTime.textContent = "10: 30 AM";
 
     }
 
     updateMessageStatus(status) {
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        if (status == "read") 
+        console.log(messageSts)
+        if (status == "sn") 
             messageSts.src = "assets/read.svg";
-        else if (status == "delivered") 
+        else if (status == "recv") 
             messageSts.src = "assets/delivered.svg";
-        else if (status == "send-to-server") 
+        else if (status == "st") 
             messageSts.src = "assets/send-to-server.svg";
     }
 

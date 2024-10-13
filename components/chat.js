@@ -368,6 +368,9 @@ export class chat extends HTMLElement {
         this.convo_list_users = ['othman', 'mohamed', 'ahmed', 'zohair', 'nassima', 'khadija']; 
         this.activeMember = null;
         this.isActive = false;
+
+
+        this.identifier = 0
     }
 
     updateScroll() {
@@ -422,33 +425,9 @@ export class chat extends HTMLElement {
         // this.handleOverlayClick();
     }
     
-    handleMessage(event) {
-        const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
-        
-        const message = event.target.value;
-        if (message) {
-            sendBtnIcon.classList.add('visible');
-        }
-        else {
-            sendBtnIcon.classList.remove('visible');
-        }
-    }
+
     
-    sendMessage(event) {
-        const input = this.shadowRoot.querySelector('#message-input');
 
-        const message = input.value;
-        input.value = "";
-        input.focus();
-
-        if (message) {
-            const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
-            if (conversation) {
-                conversation.addMessage(message, 'user');
-                this.updateScroll();
-            }
-        }
-    }
 
     handleSearch(event)  {
         const searchQuery = event.target.value.toLowerCase();
@@ -475,33 +454,82 @@ export class chat extends HTMLElement {
         const profileIcon = this.shadowRoot.querySelector('.profile-icon');
         profileIcon.addEventListener('click', this.handleProfileOffCanvas.bind(this));
 
+        
+        this.addMessageEventListener()
+        this.addOffcanvasEventListener()
+        
+    }
+    addOffcanvasEventListener() {
         const profileOffcanvasCloseBtn = this.shadowRoot.querySelector('#profileOffcanvasCloseBtn');
         profileOffcanvasCloseBtn.addEventListener('click', this.handleProfileCloseOffcanvas.bind(this));
         
         const listOffcanvas = this.shadowRoot.querySelector('#list-icon-container');
         listOffcanvas.addEventListener('click', this.handleListOffcanvas.bind(this));
-
+    
         const listOffCloseBtn = this.shadowRoot.querySelector('#listOffcanvasCloseBtn');
         listOffCloseBtn.addEventListener('click', this.handlelistCloseOffcanvas.bind(this));
-
+    
         const overlay = this.shadowRoot.querySelector('#overlay');
         overlay.addEventListener('click', this.handleOverlayClick.bind(this));
-
+    
         const offcanvasSearch = this.shadowRoot.querySelector('#offcanvas-search');
         offcanvasSearch.addEventListener('input', this.handleOffcanvasSearch.bind(this));
 
+    }
 
+    addMessageEventListener() {
+        const sendBtn = this.shadowRoot.querySelector('#send-btn-icon');
+        sendBtn.addEventListener('click', this.handleMessageInput.bind(this));
+        
         const inputMessage = this.shadowRoot.querySelector('#message-input');
         inputMessage.addEventListener('input', this.handleMessage.bind(this));
         inputMessage.addEventListener('keypress', this.handleKeyPress.bind(this));
-
-        const sendBtn = this.shadowRoot.querySelector('#send-btn-icon');
-        sendBtn.addEventListener('click', this.sendMessage.bind(this));
     }
-    
+
+    handleMessageInput(event) {
+        const input = this.shadowRoot.querySelector('#message-input');
+
+        const msg = input.value;
+        input.value = "";
+        input.focus();
+
+        if (msg) {
+            const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
+            if (conversation) {
+                
+                const message = {
+                    m: "msg",
+                    clt: "2", // client id
+                    tp: "txt",
+                    identifier: this.identifier,
+                    cnt: msg
+                }
+                
+                this.identifier++
+
+                conversation.addMessage(message);
+                this.sendMessage(message);
+                
+                this.updateScroll();
+            }
+        }
+    }
+
+    handleMessage(event) {
+        const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
+        
+        const message = event.target.value;
+        if (message) {
+            sendBtnIcon.classList.add('visible');
+        }
+        else {
+            sendBtnIcon.classList.remove('visible');
+        }
+    }
+
     handleKeyPress(event) {
         if (event.key == "Enter")
-            this.sendMessage(event);
+            this.handleMessageInput(event);
     }
 
     handleListOffcanvas(event) {
