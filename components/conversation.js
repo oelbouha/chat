@@ -38,6 +38,7 @@ export class conversation extends HTMLElement {
 		this.attachShadow({mode:'open'});
 		this.shadowRoot.appendChild(ConversationTemplate.content.cloneNode(true));
 
+        
         // user messages
         this.messages = [{
             m: "sn",
@@ -45,7 +46,7 @@ export class conversation extends HTMLElement {
             tp: "txt",
             cnt: "Another test message"}
         ];
-
+        
         // client messages 
         this.clientMessages = [
             {
@@ -54,53 +55,45 @@ export class conversation extends HTMLElement {
                 tp: "txt",
                 cnt: "Another test message"}
             ]
+            
+            
+            this.render()
 	    }
-
+        
 
 	connectedCallback() {
-		this.render()
-        this.listenForNewMessages()
+		
 	}
 
-
-    listenForNewMessages() {
-        document.addEventListener('newMessage', (event) => {
-            console.log ("adding new message");
-        })
-
-        document.addEventListener('messageStatus', (event) => {
-            const status = event.detail
-            const messageToUpdate = this.messages.find(m => m.identifier == status.identifier)
-
-            if (messageToUpdate) {
-                messageToUpdate.m = status.m
-                this.updateMessageStatus(status.m, status.identifier)
-            }
-            else
-                console.log(" message not found")
-        })
-    }
     
-    updateMessageStatus(status, identifier) {
+    updateMessageStatus(message) {
+        const identifier = message.identifier
+        const messageStatus = message.m
+
         const id = "wp-user-message[message-id=\"" + identifier + "\"]" 
+        
+
         const conversation = this.shadowRoot.querySelector('#conversation');
         const messageToUpdate = conversation.querySelector(id);
+        
+        if (messageToUpdate) {
+            console.log("updating message", messageToUpdate)
+            messageToUpdate.updateMessageStatus(messageStatus)
+        }
 
-        messageToUpdate.updateMessageStatus(status)
-        console.log(messageToUpdate)
+        
+        // const Update = this.messages.find(m => m.identifier == status.identifier)
+        // console.log("found ", Update)
+
     }
 
-
-    renderMessages(message) {
-        wpUserComponent.setMessage(message, "1:30 AM");
-        wpUserComponent.updateMessageStatus("read");
-    }
     
-    addMessage(message) {
+    displayUserMessage(message) {
         this.messages.push(message)
+        
         const conversation = this.shadowRoot.querySelector('#conversation');
         
-        const userId = message.ctl;
+        const userId = message.clt;
         const messageType = message.tp;
         const messageContent = message.cnt;
         const messageIdentifier = message.identifier
@@ -110,16 +103,22 @@ export class conversation extends HTMLElement {
             wpUserComponent.setMessage(messageContent, "1:30 AM");
             wpUserComponent.setAttribute("message-id", messageIdentifier);
             conversation.appendChild(wpUserComponent);
-
-            
-            // this is for client
-            // const wpClientComponent = document.createElement('wp-client-message')
-            // wpClientComponent.setMessage(messageContent)
-            // conversation.appendChild(wpClientComponent)
-            
         }, 0);
     }
     
+    displayClientMessage(message) {
+
+        const userId = message.clt;
+        const messageType = message.tp;
+        const messageContent = message.cnt;
+        const messageIdentifier = message.identifier
+        
+        const conversation = this.shadowRoot.querySelector('#conversation');
+        const wpClientComponent = document.createElement('wp-client-message')
+        wpClientComponent.setMessage(messageContent)
+        conversation.appendChild(wpClientComponent)
+    }
+
 	render() {
         const username = this.getAttribute('username');
         const userProfilePic = this.getAttribute('profile-pic');
@@ -147,3 +146,15 @@ export class conversation extends HTMLElement {
 		return ['username', 'profile-pic', 'last-message'];
 	}
 }
+
+
+/*
+
+
+{ "m": "msg", "clt": 3, "tp": "txt", "identifier": 31, "cnt": "helllo" }
+{ "m": "recv", "clt": 3, "msg": 951, "identifier": 0 }
+
+
+jawad session id == 4
+sessionid=75r0w7kvo1v7o9rcr69ez3mk9ue4fkck 
+*/

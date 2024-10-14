@@ -5,16 +5,7 @@ import { conversation } from './components/conversation.js';
 import { profile } from './components/user-profile.js';
 import { card } from './components/user-card.js';
 import { userMessage } from './components/user-message.js';
-
-
-const websocket = new WebSocket("ws://127.0.0.1:8000/ws/chat/room/");
-
-function sendMesasge(message) {
-	websocket.send(JSON.stringify(message));
-}
-
-
-const wpChat = document.querySelector('wp-chat').sendMessage = sendMesasge
+import { websocket } from "./components/net.js";
 
 
 websocket.onopen = () => {
@@ -22,39 +13,41 @@ websocket.onopen = () => {
 }
 
 
-websocket.onmessage = (e) => {
-	const message = JSON.parse(e.data);
-	switch (message.m) {
-		case "msg":
-			handleMessage(message)
-			break 
-		case "st":
-			handleMessageStatus(message)
-			break 
-		case "err":
-			console.log("ther is an error in the message", message)
-			break
-	}
+// websocket.onmessage = (e) => {
+// 	const message = JSON.parse(e.data);
 
-}
+// 	console.log("received :: ", message)
 
+// 	switch (message.m) {
+// 		case "msg":
+// 			handleMessage(message)
+// 			break 
+// 		case "st":
+// 			handleMessageStatus(message)
+// 			break 
+// 		case "recv":
+// 			handleMessageStatus(message)
+// 			break 
+// 		case "sn":
+// 			handleMessageStatus(message)
+// 			break 
+// 		case "err":
+// 			console.log("ther is an error in the message", message)
+// 			break
+// 	}
 
-function handleMessage(message) {
-	document.dispatchEvent(new CustomEvent('newMessage', {detail: message}))
-	console.log ("new message:: ", message.cnt);
-}
-
-function handleMessageStatus(status) {
-	document.dispatchEvent(new CustomEvent('messageStatus', {detail: status}))
-	console.log ("message status :: ", status);
-}
+// }
 
 
+// function handleMessage(message) {
+// 	document.dispatchEvent(new CustomEvent('newMessage', {detail: message}))
+// 	console.log ("new message:: ", message.cnt);
+// }
 
-
-
-
-
+// function handleMessageStatus(status) {
+// 	document.dispatchEvent(new CustomEvent('messageStatus', {detail: status}))
+// 	console.log ("message status :: ", status);
+// }
 
 
 

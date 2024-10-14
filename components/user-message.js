@@ -116,13 +116,12 @@ export class userMessage extends HTMLElement {
         userMessage.textContent = message;
         
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
-        userMessageTime.textContent = "10: 30 AM";
+        userMessageTime.textContent = "10:30 AM";
 
     }
 
     updateMessageStatus(status) {
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        console.log(messageSts)
         if (status == "sn") 
             messageSts.src = "assets/read.svg";
         else if (status == "recv") 

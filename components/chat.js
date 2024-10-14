@@ -1,3 +1,6 @@
+import { websocket } from "./net.js";
+
+
 const template = document.createElement('template');
 
 template.innerHTML = /*html*/`
@@ -365,9 +368,35 @@ export class chat extends HTMLElement {
         let templateClone = template.content.cloneNode(true);
         shadowRoot.append(templateClone);        
 
-        this.convo_list_users = ['othman', 'mohamed', 'ahmed', 'zohair', 'nassima', 'khadija']; 
+        this.convo_list_users = ['othman', 'mohamed'];
+
         this.activeMember = null;
+        this.activeMemberId = null;
         this.isActive = false;
+
+            websocket.onmessage = (e) => {
+                const message = JSON.parse(e.data);
+                
+                // console.log("received :: ", message)
+                    
+            switch (message.m) {
+                case "msg":
+                    this.handleIncomingMessage(message)
+                    break 
+                case "st":
+                    this.handleMessageStatus(message)
+                    break 
+                case "recv":
+                    this.handleMessageStatus(message)
+                    break 
+                case "sn":
+                    this.handleMessageStatus(message)
+                    break 
+                case "err":
+                        console.log("ther is an error in the message", message)
+                        break
+                    }  
+                }
 
 
         this.identifier = 0
@@ -479,14 +508,39 @@ export class chat extends HTMLElement {
 
     addMessageEventListener() {
         const sendBtn = this.shadowRoot.querySelector('#send-btn-icon');
-        sendBtn.addEventListener('click', this.handleMessageInput.bind(this));
+        sendBtn.addEventListener('click', this.sendMessage.bind(this));
         
         const inputMessage = this.shadowRoot.querySelector('#message-input');
-        inputMessage.addEventListener('input', this.handleMessage.bind(this));
+        inputMessage.addEventListener('input', this.displaySendBtn.bind(this));
         inputMessage.addEventListener('keypress', this.handleKeyPress.bind(this));
     }
 
-    handleMessageInput(event) {
+    handleIncomingMessage(message) {
+        console.log ("new message:: ", message);
+
+        const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
+        if (conversation) {
+            
+            conversation.displayClientMessage(message);
+            
+            const response = {
+                "m": "recv",
+                "clt": "4",
+                "msg": message.msg
+            }
+            websocket.send(JSON.stringify(response));
+        }
+    }
+    
+    handleMessageStatus(message) {
+        console.log ("updating message status :: ", message);
+        
+        const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
+        conversation.updateMessageStatus(message)
+
+    }
+
+    sendMessage(event) {
         const input = this.shadowRoot.querySelector('#message-input');
 
         const msg = input.value;
@@ -498,24 +552,24 @@ export class chat extends HTMLElement {
             if (conversation) {
                 
                 const message = {
-                    m: "msg",
-                    clt: "2", // client id
-                    tp: "txt",
-                    identifier: this.identifier,
-                    cnt: msg
+                    "m": "msg",
+                    "clt": "4", // client id
+                    "tp": "txt",
+                    "identifier": this.identifier,
+                    "cnt": msg
                 }
                 
                 this.identifier++
 
-                conversation.addMessage(message);
-                this.sendMessage(message);
+                conversation.displayUserMessage(message);
+                websocket.send(JSON.stringify(message));
                 
                 this.updateScroll();
             }
         }
     }
 
-    handleMessage(event) {
+    displaySendBtn(event) {
         const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
         
         const message = event.target.value;
@@ -529,7 +583,7 @@ export class chat extends HTMLElement {
 
     handleKeyPress(event) {
         if (event.key == "Enter")
-            this.handleMessageInput(event);
+            this.sendMessage(event);
     }
 
     handleListOffcanvas(event) {
@@ -628,6 +682,12 @@ export class chat extends HTMLElement {
             memberElement.setAttribute('profile-pic', `assets/after.png`);
             memberElement.setAttribute('last-message', 'hello there!');
             membersContainer.appendChild(memberElement);
+
+            memberElement.addEventListener('click', {
+
+
+
+            })
         });
 
         // test
