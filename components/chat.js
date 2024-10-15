@@ -368,7 +368,16 @@ export class chat extends HTMLElement {
         let templateClone = template.content.cloneNode(true);
         shadowRoot.append(templateClone);        
 
-        this.convo_list_users = ['othman', 'mohamed'];
+        this.convo_list_users = [
+        {
+            "userName": "mohamed",
+            "id": "5"
+        },
+        {
+            "userName": "jawad",
+            "id": "4"
+        }, 
+        ];
 
         this.activeMember = null;
         this.activeMemberId = null;
@@ -418,6 +427,8 @@ export class chat extends HTMLElement {
         const mem = event.target;
         mem.activate();
         this.activeMember = mem;
+
+        console.log("member active :: ", this.activeMember)
 
         // //  handle the conversation part
         // const conversationBody = this.shadowRoot.querySelector('#convo-messages');
@@ -517,18 +528,49 @@ export class chat extends HTMLElement {
 
     handleIncomingMessage(message) {
         console.log ("new message:: ", message);
+        const response = {
+            "m": "recv",
+            "clt": "4",
+            "msg": message.msg
+        }
+        websocket.send(JSON.stringify(response));
 
         const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
         if (conversation) {
+            const client = this.convo_list_users.find(user => user.id == message.clt)
             
-            conversation.displayClientMessage(message);
-            
-            const response = {
-                "m": "recv",
-                "clt": "4",
-                "msg": message.msg
+            if (client) {
+                
+                const username = "jawad" // make this fixed
+                const membersContainer = this.shadowRoot.querySelector('.members-container');
+                const memberElement = membersContainer.querySelector(`wp-chat-member[username="${username}"]`);
+                
+                if (this.activeMember) {
+                    // display new message in convo and hide new messages counter
+                    conversation.displayClientMessage(message);
+                    memberElement.hideMessageCounter()
+                    const response = {
+                        "m": "sn",
+                        "clt": "4",
+                        "msg": message.msg
+                    }
+                    websocket.send(JSON.stringify(response));
+                }
+                else {
+                    // add the message to mesage list and add +1 in incoming messages
+                    memberElement.displayMessageCounter(1)
+                    memberElement.updateLastMessage(message.cnt)
+    
+                    membersContainer.removeChild(memberElement)
+                    membersContainer.insertBefore(memberElement, membersContainer.firstChild)
+                    const userIndex = this.convo_list_users.findIndex(user => user.userName === username);
+                    if (userIndex !== -1) {
+                        const user = this.convo_list_users.splice(userIndex, 1)[0];
+                        this.convo_list_users.unshift(user);
+                    }
+    
+                }
             }
-            websocket.send(JSON.stringify(response));
         }
     }
     
@@ -591,8 +633,9 @@ export class chat extends HTMLElement {
         
         if (this.isActive == false)  {
             this.convo_list_users.forEach(username => {
+                
                 const memberElement = document.createElement('wp-chat-member');
-                memberElement.setAttribute('username', username);
+                memberElement.setAttribute('username', username.userName);
                 memberElement.setAttribute('profile-pic', `assets/after.png`);
                 memberElement.setAttribute('last-message', 'hello there!');
                 listOffcanvasBody.appendChild(memberElement);
@@ -673,21 +716,16 @@ export class chat extends HTMLElement {
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         
         //// for test
-        const username = "mohhamed";
+        const username = "mohamed";
         const profilePic = "assets/after.png";
 
         this.convo_list_users.forEach(username => {
+
             const memberElement = document.createElement('wp-chat-member');
-            memberElement.setAttribute('username', username);
+            memberElement.setAttribute('username', username.userName);
             memberElement.setAttribute('profile-pic', `assets/after.png`);
-            memberElement.setAttribute('last-message', 'hello there!');
             membersContainer.appendChild(memberElement);
 
-            memberElement.addEventListener('click', {
-
-
-
-            })
         });
 
         // test
