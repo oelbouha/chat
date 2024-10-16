@@ -374,18 +374,27 @@ export class chat extends HTMLElement {
             "id": "5"
         },
         {
+            "userName": "ahmed",
+            "id": "6"
+        }, 
+        {
             "userName": "jawad",
             "id": "4"
         }, 
         ];
 
         this.activeMember = null;
-        this.activeMemberId = null;
         this.isActive = false;
+        
+        this.activeMemberId = null;
+        this.activeMemberUsername = null;
+        
 
-            websocket.onmessage = (e) => {
-                const message = JSON.parse(e.data);
-                
+        this.username = "outman"
+        this.userId = "3"
+
+        websocket.onmessage = (e) => {
+            const message = JSON.parse(e.data);
                 // console.log("received :: ", message)
                     
             switch (message.m) {
@@ -409,6 +418,9 @@ export class chat extends HTMLElement {
 
 
         this.identifier = 0
+        this.clientsMessages = new Map()
+        this.userMessages = new Map()
+
     }
 
     updateScroll() {
@@ -419,6 +431,7 @@ export class chat extends HTMLElement {
     handleMemberClick(event) {
         const username = event.detail.username;
         const profilePic = event.detail.profilePic;
+        const userId = event.detail.id
 
         if (this.activeMember) {
             this.activeMember.deactivate();
@@ -426,53 +439,73 @@ export class chat extends HTMLElement {
 
         const mem = event.target;
         mem.activate();
+        if (mem === this.activeMember) return 
         this.activeMember = mem;
 
-        console.log("member active :: ", this.activeMember)
+        this.activeMemberId = userId
+        this.activeMemberUsername = username
 
-        // //  handle the conversation part
-        // const conversationBody = this.shadowRoot.querySelector('#convo-messages');
+        // console.log("member active :: ", this.activeMember)
+        // console.log ("userName", this.activeMemberUsername, this.activeMemberId)
 
-        // const chatConversation = this.shadowRoot.querySelector('#convo-messages');
-        // const convoHeader = chatConversation.querySelector('#convo-header');
-        // convoHeader.style.display = 'block';
 
-        // const inputMessage = chatConversation.querySelector('#input-message-container');
-        // inputMessage.style.display = `flex`;
-
-        // const userProfileImg = convoHeader.querySelector('#user-image');
-        // userProfileImg.src = profilePic;
-        // const userName = convoHeader.querySelector('.user-name');
-        // userName.textContent = username;
-        // const conversation = chatConversation.querySelector('#chat-conversation');
-        // conversation.innerHTML = ``;
-        // const wpChatconversation = document.createElement('wp-chat-conversation');
-
-        // wpChatconversation.setAttribute('username', username);
-        // wpChatconversation.setAttribute('profile-pic', profilePic);
-        // conversation.appendChild(wpChatconversation);
         
-        // // /// load the profile info
-        // const userProfile = this.shadowRoot.querySelector('#user-profile');
-        // userProfile.style.display = 'block';
-        // userProfile.innerHTML = ``;
-        // const wpProfile = document.createElement('wp-chat-profile');
-        // wpProfile.setAttribute('username', username);
-        // wpProfile.setAttribute('profile-pic', profilePic);
-        // userProfile.appendChild(wpProfile);
+        const chatConversation = this.shadowRoot.querySelector('#convo-messages');
+        // display header and message input 
+        const convoHeader = chatConversation.querySelector('#convo-header');
+        convoHeader.style.display = 'block';
+        const inputMessage = chatConversation.querySelector('#input-message-container');
+        inputMessage.style.display = `flex`;
+        
+        // display user image and name
+        const userProfileImg = convoHeader.querySelector('#user-image');
+        userProfileImg.src = profilePic;
+        const userName = convoHeader.querySelector('.user-name');
+        userName.textContent = this.activeMemberUsername;
+        
+        // load member conversation
+        const messagesBody = chatConversation.querySelector('#chat-conversation');
+        messagesBody.innerHTML = ``
+        
+        const activeMemberMessages = this.clientsMessages.get(this.activeMemberId)
+        const userMessages = this.userMessages.get(this.activeMemberId)
+        
+        const activeMemberComponent = chatConversation.querySelector(`wc-chat-conversation[username="${this.activeMemberUsername}"]`)
+        
+        if (!activeMemberComponent) {
+            const chatConvoComponent = document.createElement('wc-chat-conversation');
+            chatConvoComponent.setAttribute('username', username);
+            chatConvoComponent.setAttribute('profile-pic', profilePic);
+            chatConvoComponent.loadClientMessages(activeMemberMessages, this.activeMemberId)
+            this.activeMember.hideMessageCounter()
+            messagesBody.appendChild(chatConvoComponent);
+        }
+        else {
+            activeMemberComponent.loadClientMessages(activeMemberMessages, this.activeMemberId)
+            activeMemberComponent.loadUserMessages(userMessages)
+            this.activeMember.hideMessageCounter()
+            this.updateScroll()
+        }
+        
+        // this.clientsMessages.delete(this.activeMemberId)
+        
+        // /// load the profile info
+        const userProfile = this.shadowRoot.querySelector('#user-profile');
+        userProfile.style.display = 'block';
+        userProfile.innerHTML = ``;
+        const wpProfile = document.createElement('wc-chat-profile');
+        wpProfile.setAttribute('username', this.activeMemberUsername);
+        wpProfile.setAttribute('profile-pic', profilePic);
+        userProfile.appendChild(wpProfile);
 
-        // // close overlay
-        // this.handleOverlayClick();
+        // close overlay
+        this.handleOverlayClick();
     }
-    
-
-    
-
 
     handleSearch(event)  {
         const searchQuery = event.target.value.toLowerCase();
         const membersContainer = this.shadowRoot.querySelector('.members-container');
-        const members = membersContainer.querySelectorAll('wp-chat-member');
+        const members = membersContainer.querySelectorAll('wc-chat-member');
     
         members.forEach(member => {
             const username = member.getAttribute('username').toLowerCase();
@@ -494,7 +527,6 @@ export class chat extends HTMLElement {
         const profileIcon = this.shadowRoot.querySelector('.profile-icon');
         profileIcon.addEventListener('click', this.handleProfileOffCanvas.bind(this));
 
-        
         this.addMessageEventListener()
         this.addOffcanvasEventListener()
         
@@ -528,56 +560,86 @@ export class chat extends HTMLElement {
 
     handleIncomingMessage(message) {
         console.log ("new message:: ", message);
-        const response = {
+        
+        let response = {
             "m": "recv",
-            "clt": "4",
+            "clt": message.clt,
             "msg": message.msg
         }
         websocket.send(JSON.stringify(response));
 
-        const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
-        if (conversation) {
-            const client = this.convo_list_users.find(user => user.id == message.clt)
-            
-            if (client) {
-                
-                const username = "jawad" // make this fixed
-                const membersContainer = this.shadowRoot.querySelector('.members-container');
-                const memberElement = membersContainer.querySelector(`wp-chat-member[username="${username}"]`);
-                
-                if (this.activeMember) {
-                    // display new message in convo and hide new messages counter
-                    conversation.displayClientMessage(message);
-                    memberElement.hideMessageCounter()
-                    const response = {
-                        "m": "sn",
-                        "clt": "4",
-                        "msg": message.msg
-                    }
-                    websocket.send(JSON.stringify(response));
-                }
-                else {
-                    // add the message to mesage list and add +1 in incoming messages
-                    memberElement.displayMessageCounter(1)
-                    memberElement.updateLastMessage(message.cnt)
-    
-                    membersContainer.removeChild(memberElement)
-                    membersContainer.insertBefore(memberElement, membersContainer.firstChild)
-                    const userIndex = this.convo_list_users.findIndex(user => user.userName === username);
-                    if (userIndex !== -1) {
-                        const user = this.convo_list_users.splice(userIndex, 1)[0];
-                        this.convo_list_users.unshift(user);
-                    }
-    
-                }
-            }
+        const targrtClient = this.convo_list_users.find(user => user.id == message.clt)
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        const memberElement = membersContainer.querySelector(`wc-chat-member[username="${targrtClient.userName}"]`);
+        
+        const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
+        if (!conversation) {
+            return this.updateUnreadMessages(targrtClient, message)
         }
+        
+        const client = this.convo_list_users.find(user => user.id == message.clt)
+        if (!client) return 
+        
+        if (client.id != this.activeMember.id) {
+            return this.updateUnreadMessages(targrtClient, message)
+        }
+        
+        conversation.displayClientMessage(message);
+        
+        this.storeMessage(this.activeMemberId, message, "client")
+
+        memberElement.hideMessageCounter()
+        response = {
+            "m": "sn",
+            "clt": this.activeMemberId,
+            "msg": message.msg
+        }
+        websocket.send(JSON.stringify(response));    
+    }
+
+    storeMessage(key, value, type) {
+        if (!this.clientsMessages.has(key)) {
+            this.clientsMessages.set(key, []);
+        }
+        value["type"] = type
+        this.clientsMessages.get(key).push(value);
     }
     
+    updateUnreadMessages(targrtClient, message) {
+        this.storeMessage(targrtClient.id , message, "client")
+
+        // console.log("messages ", this.clientsMessages)
+
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        const memberElement = membersContainer.querySelector(`wc-chat-member[username="${targrtClient.userName}"]`);
+
+        memberElement.displayMessageCounter(1)
+        memberElement.updateLastMessage(message.cnt)
+        this.moveMemberElementToTop(targrtClient)
+    }
+
+    moveMemberElementToTop(targrtClient) {
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        const memberElement = membersContainer.querySelector(`wc-chat-member[username="${targrtClient.userName}"]`);
+
+        membersContainer.removeChild(memberElement)
+        membersContainer.insertBefore(memberElement, membersContainer.firstChild)
+
+        const userIndex = this.convo_list_users.findIndex(user => user.userName === targrtClient.userName);
+        if (userIndex !== -1) {
+            const user = this.convo_list_users.splice(userIndex, 1)[0];
+            this.convo_list_users.unshift(user);
+        }
+    }
+
     handleMessageStatus(message) {
-        console.log ("updating message status :: ", message);
+        // console.log ("updating message status :: ", message);
         
-        const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
+        const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
+        const activeMember = this.clientsMessages.get(this.activeMemberId)
+        const messageToUpdate = activeMember.find(msg => msg.identifier == message.identifier)
+
+        messageToUpdate["status"] = message.m
         conversation.updateMessageStatus(message)
 
     }
@@ -590,18 +652,21 @@ export class chat extends HTMLElement {
         input.focus();
 
         if (msg) {
-            const conversation = this.shadowRoot.querySelector('wp-chat-conversation');
+            const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
             if (conversation) {
                 
                 const message = {
                     "m": "msg",
-                    "clt": "4", // client id
+                    "clt": this.activeMemberId, // client id
                     "tp": "txt",
                     "identifier": this.identifier,
-                    "cnt": msg
+                    "cnt": msg,
+                    "status": "not send"
                 }
                 
                 this.identifier++
+                
+                this.storeMessage(this.activeMemberId, message, "user")
 
                 conversation.displayUserMessage(message);
                 websocket.send(JSON.stringify(message));
@@ -634,7 +699,7 @@ export class chat extends HTMLElement {
         if (this.isActive == false)  {
             this.convo_list_users.forEach(username => {
                 
-                const memberElement = document.createElement('wp-chat-member');
+                const memberElement = document.createElement('wc-chat-member');
                 memberElement.setAttribute('username', username.userName);
                 memberElement.setAttribute('profile-pic', `assets/after.png`);
                 memberElement.setAttribute('last-message', 'hello there!');
@@ -655,7 +720,7 @@ export class chat extends HTMLElement {
         console.log("search ::", searchQuery);
 
         const membersContainer = this.shadowRoot.querySelector('#list-offcanvas-body');
-        const members = membersContainer.querySelectorAll('wp-chat-member');
+        const members = membersContainer.querySelectorAll('wc-chat-member');
     
         members.forEach(member => {
             const username = member.getAttribute('username').toLowerCase();
@@ -687,7 +752,7 @@ export class chat extends HTMLElement {
         const cprofileOffcanvasBody = this.shadowRoot.querySelector('.custom-offcanvas-body');
         cprofileOffcanvasBody.innerHTML = ``;
 
-        const wpProfile = document.createElement('wp-chat-profile');
+        const wpProfile = document.createElement('wc-chat-profile');
         wpProfile.setAttribute('username', username);
         wpProfile.setAttribute('profile-pic', profilePic);
         
@@ -721,48 +786,49 @@ export class chat extends HTMLElement {
 
         this.convo_list_users.forEach(username => {
 
-            const memberElement = document.createElement('wp-chat-member');
+            const memberElement = document.createElement('wc-chat-member');
             memberElement.setAttribute('username', username.userName);
             memberElement.setAttribute('profile-pic', `assets/after.png`);
+            memberElement.setAttribute('id', username.id);
             membersContainer.appendChild(memberElement);
 
         });
 
         // test
 
-         //  handle the conversation part
-         const conversationBody = this.shadowRoot.querySelector('#convo-messages');
+        //  //  handle the conversation part
+        // const conversationBody = this.shadowRoot.querySelector('#convo-messages');
 
-         const chatConversation = this.shadowRoot.querySelector('#convo-messages');
-         const convoHeader = chatConversation.querySelector('#convo-header');
-         convoHeader.style.display = 'block';
- 
-         const inputMessage = chatConversation.querySelector('#input-message-container');
-         inputMessage.style.display = `flex`;
- 
-         const userProfileImg = convoHeader.querySelector('#user-image');
-         userProfileImg.src = profilePic;
-         const userName = convoHeader.querySelector('.user-name');
-         userName.textContent = username;
-         const conversation = chatConversation.querySelector('#chat-conversation');
-         conversation.innerHTML = ``;
-         const wpChatconversation = document.createElement('wp-chat-conversation');
- 
-         wpChatconversation.setAttribute('username', username);
-         wpChatconversation.setAttribute('profile-pic', profilePic);
-         conversation.appendChild(wpChatconversation);
-         
-         // /// load the profile info
-         const userProfile = this.shadowRoot.querySelector('#user-profile');
-         userProfile.style.display = 'block';
-         userProfile.innerHTML = ``;
-         const wpProfile = document.createElement('wp-chat-profile');
-         wpProfile.setAttribute('username', username);
-         wpProfile.setAttribute('profile-pic', profilePic);
-         userProfile.appendChild(wpProfile);
- 
-         // close overlay
-         this.handleOverlayClick();
+        // const chatConversation = this.shadowRoot.querySelector('#convo-messages');
+        // const convoHeader = chatConversation.querySelector('#convo-header');
+        // convoHeader.style.display = 'block';
+
+        // const inputMessage = chatConversation.querySelector('#input-message-container');
+        // inputMessage.style.display = `flex`;
+
+        // const userProfileImg = convoHeader.querySelector('#user-image');
+        // userProfileImg.src = profilePic;
+        // const userName = convoHeader.querySelector('.user-name');
+        // userName.textContent = username;
+        // const conversation = chatConversation.querySelector('#chat-conversation');
+        // conversation.innerHTML = ``;
+        // const wpChatconversation = document.createElement('wc-chat-conversation');
+
+        // wpChatconversation.setAttribute('username', username);
+        // wpChatconversation.setAttribute('profile-pic', profilePic);
+        // conversation.appendChild(wpChatconversation);
+        
+        // // /// load the profile info
+        // const userProfile = this.shadowRoot.querySelector('#user-profile');
+        // userProfile.style.display = 'block';
+        // userProfile.innerHTML = ``;
+        // const wpProfile = document.createElement('wc-chat-profile');
+        // wpProfile.setAttribute('username', username);
+        // wpProfile.setAttribute('profile-pic', profilePic);
+        // userProfile.appendChild(wpProfile);
+
+        // // close overlay
+        // this.handleOverlayClick();
 
     }
 }

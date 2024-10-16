@@ -91,7 +91,7 @@ export class userMessage extends HTMLElement {
 		this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(userMessageTemplate.content.cloneNode(true));
 
-        let messageSend = true;
+        this.messageTime = "10:30 AM"
 	}
 
     connectedCallback() {
@@ -105,7 +105,7 @@ export class userMessage extends HTMLElement {
         userElement.style.display = 'flex';
 	}
 
-    setMessage(message) {
+    addMessage(message) {
         
         const user = this.getAttribute("user");
 
@@ -116,10 +116,14 @@ export class userMessage extends HTMLElement {
         userMessage.textContent = message;
         
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
-        userMessageTime.textContent = "10:30 AM";
+        userMessageTime.textContent = this.messageTime;
 
     }
 
+    setMessageTime(time) {
+        this.messageTime = time
+    }
+    
     updateMessageStatus(status) {
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
         if (status == "sn") 

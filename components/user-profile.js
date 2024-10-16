@@ -78,12 +78,12 @@ export class profile extends HTMLElement {
         const userProfilePic = this.getAttribute('profile-pic');
         
         const userProfileInfo = this.shadowRoot.querySelector('#user-profile-info');
-        const wp_userProfileInfo = document.createElement('wp-card');
+        const wp_userProfileInfo = document.createElement('wc-card');
         
         
         
         // set username
-        const wp_card = document.createElement('wp-card');
+        const wp_card = document.createElement('wc-card');
         const userNameIcon = "assets/circle-user.svg";
         const userName = this.getAttribute('username');
         wp_card.setAttribute('svg-path', userNameIcon);
@@ -94,7 +94,7 @@ export class profile extends HTMLElement {
         // set phone number
         const phoneNUmberIcon = "assets/phone.svg";
         const phone = "06365489752"; //this.getAttribute('phonenumber');
-        const wp_phone = document.createElement('wp-card');
+        const wp_phone = document.createElement('wc-card');
         wp_phone.setAttribute('svg-path', phoneNUmberIcon);
         wp_phone.setAttribute('header', "Phone number");
         wp_phone.setAttribute('body', phone);
@@ -103,7 +103,7 @@ export class profile extends HTMLElement {
         // set description
         const descriptionIcon = "assets/description.svg";
         const description = "this is a description ..."; //this.getAttribute('description');
-        const wp_description = document.createElement('wp-card');
+        const wp_description = document.createElement('wc-card');
         wp_description.setAttribute('svg-path', descriptionIcon);
         wp_description.setAttribute('header', "Description");
         wp_description.setAttribute('body', description);

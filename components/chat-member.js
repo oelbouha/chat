@@ -146,11 +146,13 @@ export class chatMember extends HTMLElement {
 	handleClick() {
 		const username = this.getAttribute('username');
         const profilePic = this.getAttribute('profile-pic');
+        const id = this.getAttribute('id');
+
 
 		this.dispatchEvent(new CustomEvent('memberClicked', {
 			bubbles: true,
 			composed: true,
-			detail: { username , profilePic}
+			detail: { username , profilePic, id}
 		}));
 	}
 
@@ -176,7 +178,7 @@ export class chatMember extends HTMLElement {
 	}
 
 	static get observedAttributes() {
-		return ['username', 'profile-pic', 'last-message'];
+		return ['username', 'profile-pic', 'last-message', 'id'];
 	}
 }
 

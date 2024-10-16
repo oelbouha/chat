@@ -1,3 +1,4 @@
+import { websocket } from "./net.js";
 
 const ConversationTemplate = document.createElement('template');
 
@@ -40,21 +41,10 @@ export class conversation extends HTMLElement {
 
         
         // user messages
-        this.messages = [{
-            m: "sn",
-            clt: "2",
-            tp: "txt",
-            cnt: "Another test message"}
-        ];
+        this.messages = [];
         
         // client messages 
-        this.clientMessages = [
-            {
-                m: "sn",
-                clt: "2",
-                tp: "txt",
-                cnt: "Another test message"}
-            ]
+        this.clientMessages = []
             
             
             this.render()
@@ -65,12 +55,52 @@ export class conversation extends HTMLElement {
 		
 	}
 
-    
+    loadClientMessages(messages, activeMemberId) {
+        if (!messages) return 
+
+        const conversation = this.shadowRoot.querySelector('#conversation');
+        
+        messages.forEach(message => {
+            
+            const userId = message.clt;
+            const messageType = message.tp;
+            const messageContent = message.cnt;
+            const messageIdentifier = message.identifier
+
+            if (message.type == "client") {
+                const wpClientComponent = document.createElement('wc-client-message')
+                wpClientComponent.setMessage(messageContent)
+                conversation.appendChild(wpClientComponent)
+                websocket.send(JSON.stringify({
+                    "m": "sn",
+                    "clt": activeMemberId,
+                    "msg": message.msg
+                }));
+            }
+            else {
+                const wpUserComponent = document.createElement('wc-user-message');
+                wpUserComponent.addMessage(messageContent, "1:30 AM");
+                wpUserComponent.setAttribute("message-id", messageIdentifier);
+                console.log("msg sts :: ", message.status)
+                wpUserComponent.updateMessageStatus(message.status)
+                conversation.appendChild(wpUserComponent);
+            }
+
+        });
+    }
+
+    loadUserMessages(messages) {
+        if (!messages) return 
+        messages.forEach(message => {
+            this.displayUserMessage(message)
+        });
+    }
+
     updateMessageStatus(message) {
         const identifier = message.identifier
         const messageStatus = message.m
 
-        const id = "wp-user-message[message-id=\"" + identifier + "\"]" 
+        const id = "wc-user-message[message-id=\"" + identifier + "\"]" 
         
 
         const conversation = this.shadowRoot.querySelector('#conversation');
@@ -79,6 +109,7 @@ export class conversation extends HTMLElement {
         if (messageToUpdate) {
             console.log("updating message", messageToUpdate)
             messageToUpdate.updateMessageStatus(messageStatus)
+            // messageToUpdate.setAttribute('message-id', message.id)
         }
 
         
@@ -89,7 +120,7 @@ export class conversation extends HTMLElement {
 
     
     displayUserMessage(message) {
-        this.messages.push(message)
+        // this.messages.push(message)
         
         const conversation = this.shadowRoot.querySelector('#conversation');
         
@@ -99,8 +130,8 @@ export class conversation extends HTMLElement {
         const messageIdentifier = message.identifier
         
         setTimeout(() => {
-            const wpUserComponent = document.createElement('wp-user-message');
-            wpUserComponent.setMessage(messageContent, "1:30 AM");
+            const wpUserComponent = document.createElement('wc-user-message');
+            wpUserComponent.addMessage(messageContent, "1:30 AM");
             wpUserComponent.setAttribute("message-id", messageIdentifier);
             conversation.appendChild(wpUserComponent);
         }, 0);
@@ -114,7 +145,7 @@ export class conversation extends HTMLElement {
         const messageIdentifier = message.identifier
         
         const conversation = this.shadowRoot.querySelector('#conversation');
-        const wpClientComponent = document.createElement('wp-client-message')
+        const wpClientComponent = document.createElement('wc-client-message')
         wpClientComponent.setMessage(messageContent)
         conversation.appendChild(wpClientComponent)
     }
@@ -128,14 +159,14 @@ export class conversation extends HTMLElement {
         
         setTimeout(() => {
             this.messages.forEach((message) => {
-                const wpUserComponent = document.createElement('wp-user-message');
-                wpUserComponent.setMessage(message.cnt);
+                const wpUserComponent = document.createElement('wc-user-message');
+                wpUserComponent.addMessage(message.cnt);
                 wpUserComponent.updateMessageStatus(message.m)
                 conversation.appendChild(wpUserComponent);
             });
 
             this.clientMessages.forEach((message) => {
-                const wpClientComponent = document.createElement('wp-client-message');
+                const wpClientComponent = document.createElement('wc-client-message');
                 wpClientComponent.setMessage(message.cnt);
                 conversation.appendChild(wpClientComponent);
             });
@@ -156,5 +187,5 @@ export class conversation extends HTMLElement {
 
 
 jawad session id == 4
-sessionid=75r0w7kvo1v7o9rcr69ez3mk9ue4fkck 
+sessionid=75r0w7kvo1v7o9rcr69ez3mk9ue4fkck
 */
