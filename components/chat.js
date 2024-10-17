@@ -1,5 +1,28 @@
 import { websocket } from "./net.js";
 
+let typingTimer;
+const doneTypingInterval = 2000;
+
+
+function getTimestamp(format = 'ms') {
+    const now = Date.now(); // Gets current timestamp in milliseconds
+    
+    const formats = {
+        ms: now,                    // Full milliseconds
+        seconds: Math.floor(now / 1000),  // Convert to seconds
+        formatted: {
+            milliseconds: now % 1000,           // Just milliseconds part (0-999)
+            seconds: Math.floor((now / 1000) % 60),    // Just seconds part (0-59)
+            minutes: Math.floor((now / 1000 / 60) % 60), // Just minutes part (0-59)
+            hours: Math.floor((now / 1000 / 60 / 60) % 24), // Just hours part (0-23)
+        }
+    };
+    
+    return formats[format] || formats.ms;
+}
+
+
+
 
 const template = document.createElement('template');
 
@@ -388,7 +411,7 @@ export class chat extends HTMLElement {
         
         this.activeMemberId = null;
         this.activeMemberUsername = null;
-        
+        this.isSend = false
 
         this.username = "outman"
         this.userId = "3"
@@ -410,6 +433,12 @@ export class chat extends HTMLElement {
                 case "sn":
                     this.handleMessageStatus(message)
                     break 
+                case "typ":
+                    this.handleTyping(message)
+                    break 
+                case "styp":
+                    this.handleTyping(message)
+                    break 
                 case "err":
                         console.log("ther is an error in the message", message)
                         break
@@ -428,28 +457,9 @@ export class chat extends HTMLElement {
         element.scrollTop = element.scrollHeight;
     }
 
-    handleMemberClick(event) {
-        const username = event.detail.username;
+    displayConvoHeader(event) {
         const profilePic = event.detail.profilePic;
-        const userId = event.detail.id
 
-        if (this.activeMember) {
-            this.activeMember.deactivate();
-        }
-
-        const mem = event.target;
-        mem.activate();
-        if (mem === this.activeMember) return 
-        this.activeMember = mem;
-
-        this.activeMemberId = userId
-        this.activeMemberUsername = username
-
-        // console.log("member active :: ", this.activeMember)
-        // console.log ("userName", this.activeMemberUsername, this.activeMemberId)
-
-
-        
         const chatConversation = this.shadowRoot.querySelector('#convo-messages');
         // display header and message input 
         const convoHeader = chatConversation.querySelector('#convo-header');
@@ -462,41 +472,48 @@ export class chat extends HTMLElement {
         userProfileImg.src = profilePic;
         const userName = convoHeader.querySelector('.user-name');
         userName.textContent = this.activeMemberUsername;
-        
-        // load member conversation
-        const messagesBody = chatConversation.querySelector('#chat-conversation');
-        messagesBody.innerHTML = ``
-        
-        const activeMemberMessages = this.clientsMessages.get(this.activeMemberId)
-        const userMessages = this.userMessages.get(this.activeMemberId)
-        
-        const activeMemberComponent = chatConversation.querySelector(`wc-chat-conversation[username="${this.activeMemberUsername}"]`)
-        
-        if (!activeMemberComponent) {
-            const chatConvoComponent = document.createElement('wc-chat-conversation');
-            chatConvoComponent.setAttribute('username', username);
-            chatConvoComponent.setAttribute('profile-pic', profilePic);
-            chatConvoComponent.loadClientMessages(activeMemberMessages, this.activeMemberId)
-            this.activeMember.hideMessageCounter()
-            messagesBody.appendChild(chatConvoComponent);
-        }
-        else {
-            activeMemberComponent.loadClientMessages(activeMemberMessages, this.activeMemberId)
-            activeMemberComponent.loadUserMessages(userMessages)
-            this.activeMember.hideMessageCounter()
-            this.updateScroll()
-        }
-        
-        // this.clientsMessages.delete(this.activeMemberId)
-        
-        // /// load the profile info
+    }
+    
+    displayClientProfile(event) {
+        const profilePic = event.detail.profilePic;
         const userProfile = this.shadowRoot.querySelector('#user-profile');
-        userProfile.style.display = 'block';
+        if (userProfile.style.display != 'block')
+            userProfile.style.display = 'block';
         userProfile.innerHTML = ``;
+
         const wpProfile = document.createElement('wc-chat-profile');
         wpProfile.setAttribute('username', this.activeMemberUsername);
         wpProfile.setAttribute('profile-pic', profilePic);
         userProfile.appendChild(wpProfile);
+    }
+
+    handleMemberClick(event) {
+        const profilePic = event.detail.profilePic;
+
+        if (this.activeMember) {
+            this.activeMember.deactivate();
+        }
+
+        const clickedMember = event.target;
+        clickedMember.activate();
+        if (clickedMember === this.activeMember) return 
+        this.activeMember = clickedMember;
+
+        this.activeMemberId = event.detail.id
+        this.activeMemberUsername = event.detail.username;
+
+        // console.log("member active :: ", this.activeMember)
+        // console.log ("userName", this.activeMemberUsername, this.activeMemberId)
+
+        // display user heeader
+        this.displayConvoHeader(event)
+        
+        // load member conversation
+        this.renderClientMessages(this.activeMemberId)
+        
+        // /// load the profile info
+        this.displayClientProfile(event)
+      
 
         // close overlay
         this.handleOverlayClick();
@@ -558,8 +575,21 @@ export class chat extends HTMLElement {
         inputMessage.addEventListener('keypress', this.handleKeyPress.bind(this));
     }
 
+    handleTyping(message) {
+        console.log(message)
+
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        const memberElement = membersContainer.querySelector(`wc-chat-member[id="${message.clt}"]`);
+
+        console.log("chat member :: ", memberElement)
+        if (message.m == "typ")
+            memberElement.displayIsTyping()
+        else
+            memberElement.stopIsTyping()
+    }
+
     handleIncomingMessage(message) {
-        console.log ("new message:: ", message);
+        // console.log ("new message:: ", message);
         
         let response = {
             "m": "recv",
@@ -567,6 +597,9 @@ export class chat extends HTMLElement {
             "msg": message.msg
         }
         websocket.send(JSON.stringify(response));
+        
+        if (message.clt == this.activeMemberId)
+            this.activeMember.updateLastMessage(message)
 
         const targrtClient = this.convo_list_users.find(user => user.id == message.clt)
         const membersContainer = this.shadowRoot.querySelector('.members-container');
@@ -589,6 +622,7 @@ export class chat extends HTMLElement {
         this.storeMessage(this.activeMemberId, message, "client")
 
         memberElement.hideMessageCounter()
+
         response = {
             "m": "sn",
             "clt": this.activeMemberId,
@@ -608,13 +642,15 @@ export class chat extends HTMLElement {
     updateUnreadMessages(targrtClient, message) {
         this.storeMessage(targrtClient.id , message, "client")
 
-        // console.log("messages ", this.clientsMessages)
-
+        
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         const memberElement = membersContainer.querySelector(`wc-chat-member[username="${targrtClient.userName}"]`);
-
+        
+        // console.log("messages ", memberElement)
+        
         memberElement.displayMessageCounter(1)
-        memberElement.updateLastMessage(message.cnt)
+        memberElement.updateLastMessage(message)
+
         this.moveMemberElementToTop(targrtClient)
     }
 
@@ -632,16 +668,69 @@ export class chat extends HTMLElement {
         }
     }
 
+    getMessagesById(id) {
+        for (const [key, val] of this.clientsMessages.entries()) {
+            if (key == id) {
+                return val
+            }
+        }
+        return undefined;
+    }
+
     handleMessageStatus(message) {
-        // console.log ("updating message status :: ", message);
+        console.log ("updating message status :: ", message);
         
         const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
-        const activeMember = this.clientsMessages.get(this.activeMemberId)
-        const messageToUpdate = activeMember.find(msg => msg.identifier == message.identifier)
+        
+        const userId = message.clt
+        
+        console.log("looking ", this.activeMemberId)
+        
+        const activeMember = this.getMessagesById(userId)
+        if (!activeMember) return 
+        console.log("member to update", activeMember)
 
-        messageToUpdate["status"] = message.m
-        conversation.updateMessageStatus(message)
+        let messageToUpdate = activeMember.find(msg => msg.identifier == message.identifier)
+        if (!messageToUpdate)
+            messageToUpdate = activeMember.find(msg => msg.msg == message.msg)
+        
+        if (messageToUpdate) {
+            messageToUpdate["status"] = message.m
+            messageToUpdate["msg"] = message.msg
+        }
 
+        // render the conversation
+        
+        this.renderClientMessages(userId)
+        // console.log("msg to update :: ", messageToUpdate)
+        
+        // conversation.updateMessageStatus(message)
+    }
+
+    renderClientMessages(id) {
+
+        const chatConversation = this.shadowRoot.querySelector("#convo-messages")
+        const messagesBody = chatConversation.querySelector('#chat-conversation');
+        messagesBody.innerHTML = ``
+        
+        let targetMemberMessages = this.getMessagesById(id)
+        
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        const targetMember = membersContainer.querySelector(`wc-chat-member[id="${id}"]`)
+
+        const chatConvoComponent = document.createElement('wc-chat-conversation');
+        chatConvoComponent.setAttribute('username', this.activeMemberUsername);
+        chatConvoComponent.loadClientMessages(targetMemberMessages, id)
+        if (targetMember)
+            targetMember.hideMessageCounter()
+        messagesBody.appendChild(chatConvoComponent);
+        
+        if (targetMemberMessages) {
+            const lastMessage = targetMemberMessages[targetMemberMessages.length - 1]
+            console.log("last message :: ", lastMessage)
+            if (targetMember)
+                targetMember.updateLastMessage(lastMessage)
+        }
     }
 
     sendMessage(event) {
@@ -655,17 +744,16 @@ export class chat extends HTMLElement {
             const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
             if (conversation) {
                 
+                this.identifier = getTimestamp()
                 const message = {
                     "m": "msg",
                     "clt": this.activeMemberId, // client id
                     "tp": "txt",
-                    "identifier": this.identifier,
+                    "identifier": this.username + this.identifier,
                     "cnt": msg,
-                    "status": "not send"
+                    "status": "pending"
                 }
-                
-                this.identifier++
-                
+
                 this.storeMessage(this.activeMemberId, message, "user")
 
                 conversation.displayUserMessage(message);
@@ -679,15 +767,44 @@ export class chat extends HTMLElement {
     displaySendBtn(event) {
         const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
         
+        clearTimeout(typingTimer);
+
         const message = event.target.value;
         if (message) {
             sendBtnIcon.classList.add('visible');
+            
+            if (this.isSend == false) {
+                const response = {
+                    "m": "typ",
+                    "clt": this.activeMemberId
+                }
+                websocket.send(JSON.stringify(response));
+                this.isSend = true;
+            }
+            
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+            }
+            const id = this.activeMemberId
+            typingTimer = setTimeout(
+                this.doneTyping.bind(this)
+            , doneTypingInterval);
+
         }
         else {
             sendBtnIcon.classList.remove('visible');
         }
     }
 
+    doneTyping() {
+        console.log("stop typing ...")
+        this.isSend = false
+        const response = {
+            "m": "styp",
+            "clt": this.activeMemberId
+        }
+        websocket.send(JSON.stringify(response));
+    }
     handleKeyPress(event) {
         if (event.key == "Enter")
             this.sendMessage(event);
@@ -793,42 +910,5 @@ export class chat extends HTMLElement {
             membersContainer.appendChild(memberElement);
 
         });
-
-        // test
-
-        //  //  handle the conversation part
-        // const conversationBody = this.shadowRoot.querySelector('#convo-messages');
-
-        // const chatConversation = this.shadowRoot.querySelector('#convo-messages');
-        // const convoHeader = chatConversation.querySelector('#convo-header');
-        // convoHeader.style.display = 'block';
-
-        // const inputMessage = chatConversation.querySelector('#input-message-container');
-        // inputMessage.style.display = `flex`;
-
-        // const userProfileImg = convoHeader.querySelector('#user-image');
-        // userProfileImg.src = profilePic;
-        // const userName = convoHeader.querySelector('.user-name');
-        // userName.textContent = username;
-        // const conversation = chatConversation.querySelector('#chat-conversation');
-        // conversation.innerHTML = ``;
-        // const wpChatconversation = document.createElement('wc-chat-conversation');
-
-        // wpChatconversation.setAttribute('username', username);
-        // wpChatconversation.setAttribute('profile-pic', profilePic);
-        // conversation.appendChild(wpChatconversation);
-        
-        // // /// load the profile info
-        // const userProfile = this.shadowRoot.querySelector('#user-profile');
-        // userProfile.style.display = 'block';
-        // userProfile.innerHTML = ``;
-        // const wpProfile = document.createElement('wc-chat-profile');
-        // wpProfile.setAttribute('username', username);
-        // wpProfile.setAttribute('profile-pic', profilePic);
-        // userProfile.appendChild(wpProfile);
-
-        // // close overlay
-        // this.handleOverlayClick();
-
     }
 }

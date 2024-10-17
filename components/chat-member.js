@@ -46,9 +46,23 @@ chatMemberTemplate.innerHTML = /*html*/ `
             font-weight: bold;
         }
 
-        .last-message {
+        .msg-content {
             font-size: 0.8em;
             color: #6c757d;
+        }
+        .last-message {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+        }
+        #msg-icon {
+            display: none;
+        }
+        
+        .message-status-icon {
+            width: 15px;
+            height: 15px;
         }
         #msg-counter {
             display: none;
@@ -79,7 +93,12 @@ chatMemberTemplate.innerHTML = /*html*/ `
         </div>
         <div class="user-info">
             <div class="user-name"></div>
-            <div class="last-message">Last message ...</div>
+            <div class="last-message">
+                <div id="msg-icon" >
+                    <img class="message-status-icon" src="assets/not-send.svg" />
+                </div>
+                <div class="msg-content"></div>
+            </div>
         </div>
         <div id="msg-counter">
             <div id="counter">1</div>
@@ -95,14 +114,33 @@ export class chatMember extends HTMLElement {
 		this.shadowRoot.appendChild(chatMemberTemplate.content.cloneNode(true));
         
         this.messageCounter = 0
-        this.lastMessage = "last message"
+        this.lastMessage = null
 		this.isActive = false;
+        this.render();
 	}
     
 	activate() {
         this.isActive = true;
 		this.updateStyle();
 	}
+    
+    displayIsTyping() {
+        const msgIcon = this.shadowRoot.querySelector("#msg-icon")
+        msgIcon.style.display = "none"
+        const lastMessageTag = this.shadowRoot.querySelector(".msg-content");
+        lastMessageTag.textContent = "typing..."
+        lastMessageTag.style["color"] = "green";
+    }
+    
+    stopIsTyping() {
+        const lastMessageTag = this.shadowRoot.querySelector(".msg-content");
+        lastMessageTag.textContent = this.lastMessage.cnt
+        if (this.lastMessage.type == "user") {
+            const msgIcon = this.shadowRoot.querySelector("#msg-icon")
+            msgIcon.style.display = "block"
+        }
+        lastMessageTag.style["color"] = "white";
+    }
     
 	deactivate() {
         this.isActive = false;
@@ -112,15 +150,32 @@ export class chatMember extends HTMLElement {
     displayMessageCounter(numberOfmessages) {
         const counterContainer = this.shadowRoot.querySelector("#msg-counter");
         counterContainer.style.display = "flex"
+
         const counter = counterContainer.querySelector("#counter")
         this.messageCounter += numberOfmessages
         counter.textContent = this.messageCounter
     }
     
-    updateLastMessage(newMessage) {
-        this.lastMessage = newMessage
-        const lastMessage = this.shadowRoot.querySelector(".last-message");
-        lastMessage.textContent = this.lastMessage
+    updateLastMessage(message) {
+        const messageContent = message.cnt;
+        const messagetype = message.type
+        
+        if (message == this.lastMessage) return
+
+        this.lastMessage = message
+        const msgIcon = this.shadowRoot.querySelector("#msg-icon")
+        if (messagetype == "user") {
+            msgIcon.style.display = "block"
+            this.updateMessageStatus(message.status)
+        }
+        else
+            msgIcon.style.display = "none"
+
+        const lastMessageTag = this.shadowRoot.querySelector(".msg-content");
+        let msg = messageContent
+        if (messageContent.length > 20)
+            msg  = messageContent.slice(0, 20) + "..."
+        lastMessageTag.textContent = msg
     }
 
     hideMessageCounter() {
@@ -157,7 +212,7 @@ export class chatMember extends HTMLElement {
 	}
 
 	connectedCallback() {
-		this.render();
+
 		this.shadowRoot.querySelector('.member').addEventListener('click', this.handleClick.bind(this));
 	}
 	
@@ -168,14 +223,25 @@ export class chatMember extends HTMLElement {
 
 		const userNameElement = this.shadowRoot.querySelector('.user-name');
 		const profilePicElement = this.shadowRoot.querySelector('.user-image');
-		const lastMessageElement = this.shadowRoot.querySelector('.last-message');
+		const msg = this.shadowRoot.querySelector('.msg-content');
 
 		userNameElement.textContent = username;
 		profilePicElement.src = profilePic;
-		lastMessageElement.textContent = this.lastMessage;
+        msg.textContent = "last message ..."
 
+        console.log("render ..... ")
 		this.updateStyle();
 	}
+
+    updateMessageStatus(status) {
+        const messageSts = this.shadowRoot.querySelector('.message-status-icon');
+        if (status == "sn") 
+            messageSts.src = "assets/read.svg";
+        else if (status == "recv") 
+            messageSts.src = "assets/delivered.svg";
+        else if (status == "st") 
+            messageSts.src = "assets/send-to-server.svg";
+    }
 
 	static get observedAttributes() {
 		return ['username', 'profile-pic', 'last-message', 'id'];

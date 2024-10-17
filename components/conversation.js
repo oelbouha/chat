@@ -59,6 +59,7 @@ export class conversation extends HTMLElement {
         if (!messages) return 
 
         const conversation = this.shadowRoot.querySelector('#conversation');
+        if (!conversation) return 
         
         messages.forEach(message => {
             
@@ -66,22 +67,24 @@ export class conversation extends HTMLElement {
             const messageType = message.tp;
             const messageContent = message.cnt;
             const messageIdentifier = message.identifier
+            const messageStatus = message.status
 
             if (message.type == "client") {
                 const wpClientComponent = document.createElement('wc-client-message')
                 wpClientComponent.setMessage(messageContent)
                 conversation.appendChild(wpClientComponent)
-                websocket.send(JSON.stringify({
-                    "m": "sn",
-                    "clt": activeMemberId,
-                    "msg": message.msg
-                }));
+               
+                if (message.status != "sn") {
+                    websocket.send(JSON.stringify({
+                        "m": "sn",
+                        "clt": activeMemberId,
+                        "msg": message.msg
+                    }));
+                }
             }
             else {
                 const wpUserComponent = document.createElement('wc-user-message');
                 wpUserComponent.addMessage(messageContent, "1:30 AM");
-                wpUserComponent.setAttribute("message-id", messageIdentifier);
-                console.log("msg sts :: ", message.status)
                 wpUserComponent.updateMessageStatus(message.status)
                 conversation.appendChild(wpUserComponent);
             }
@@ -95,28 +98,33 @@ export class conversation extends HTMLElement {
             this.displayUserMessage(message)
         });
     }
-
-    updateMessageStatus(message) {
-        const identifier = message.identifier
-        const messageStatus = message.m
-
-        const id = "wc-user-message[message-id=\"" + identifier + "\"]" 
+    
+    // updateMessageStatus(message) {
+    //     const identifier = message.identifier
+    //     const messageStatus = message.m
         
-
-        const conversation = this.shadowRoot.querySelector('#conversation');
-        const messageToUpdate = conversation.querySelector(id);
         
-        if (messageToUpdate) {
-            console.log("updating message", messageToUpdate)
-            messageToUpdate.updateMessageStatus(messageStatus)
-            // messageToUpdate.setAttribute('message-id', message.id)
-        }
+    //     const conversation = this.shadowRoot.querySelector('#conversation');
 
+    //     let id = "wc-user-message[message-id=\"" + message.msg + "\"]"
+
+    //     if (message.m == "st") {
+    //         id = "wc-user-message[message-id=\"" + identifier + "\"]" 
+            
+    //         const messageToUpdate = conversation.querySelector(id);
+    //         if (messageToUpdate) {
+    //             messageToUpdate.updateMessageStatus(messageStatus)
+    //             messageToUpdate.setAttribute('message-id', message.msg)
+    //         }
+    //         return 
+    //     }
         
-        // const Update = this.messages.find(m => m.identifier == status.identifier)
-        // console.log("found ", Update)
-
-    }
+    //     const messageToUpdate = conversation.querySelector(id);
+        
+    //     if (messageToUpdate) {
+    //         messageToUpdate.updateMessageStatus(messageStatus)
+    //     }
+    // }
 
     
     displayUserMessage(message) {
@@ -145,6 +153,7 @@ export class conversation extends HTMLElement {
         const messageIdentifier = message.identifier
         
         const conversation = this.shadowRoot.querySelector('#conversation');
+        if (!conversation) return 
         const wpClientComponent = document.createElement('wc-client-message')
         wpClientComponent.setMessage(messageContent)
         conversation.appendChild(wpClientComponent)
