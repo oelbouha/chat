@@ -98,7 +98,7 @@ export class clientMessage extends HTMLElement {
         clientElement.style.display = 'flex';
 
         clientElement.textContent = message;
-        timeElement.textContent = '10:30 AM';
+        timeElement.textContent = time;
 
     }
 

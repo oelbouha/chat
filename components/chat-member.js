@@ -134,6 +134,11 @@ export class chatMember extends HTMLElement {
     
     stopIsTyping() {
         const lastMessageTag = this.shadowRoot.querySelector(".msg-content");
+        if (!this.lastMessage) {
+            lastMessageTag.textContent = ""
+            lastMessageTag.style["color"] = "white";
+            return ;
+        }
         lastMessageTag.textContent = this.lastMessage.cnt
         if (this.lastMessage.type == "user") {
             const msgIcon = this.shadowRoot.querySelector("#msg-icon")
@@ -148,6 +153,8 @@ export class chatMember extends HTMLElement {
 	}
     
     displayMessageCounter(numberOfmessages) {
+        if (numberOfmessages <= 0)
+            return 
         const counterContainer = this.shadowRoot.querySelector("#msg-counter");
         counterContainer.style.display = "flex"
 
@@ -156,15 +163,19 @@ export class chatMember extends HTMLElement {
         counter.textContent = this.messageCounter
     }
     
-    updateLastMessage(message) {
-        const messageContent = message.cnt;
-        const messagetype = message.type
-        
-        if (message == this.lastMessage) return
+    updateLastMessage(message, userId) {
+        if (!message || message == this.lastMessage) return
 
+        // console.log("last msg ::", message)
+        let messageContent = message.cnt;
+        if (!messageContent)
+            messageContent = message.content
+    
         this.lastMessage = message
+        
         const msgIcon = this.shadowRoot.querySelector("#msg-icon")
-        if (messagetype == "user") {
+
+        if (message.type == "user" || message.sender == userId) {
             msgIcon.style.display = "block"
             this.updateMessageStatus(message.status)
         }
@@ -176,6 +187,7 @@ export class chatMember extends HTMLElement {
         if (messageContent.length > 20)
             msg  = messageContent.slice(0, 20) + "..."
         lastMessageTag.textContent = msg
+        lastMessageTag.style["color"] = "#6c757d"
     }
 
     hideMessageCounter() {
@@ -227,19 +239,23 @@ export class chatMember extends HTMLElement {
 
 		userNameElement.textContent = username;
 		profilePicElement.src = profilePic;
-        msg.textContent = "last message ..."
 
-        console.log("render ..... ")
 		this.updateStyle();
 	}
 
+    html() {
+        return /*html*/`
+
+        `
+    }
+
     updateMessageStatus(status) {
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        if (status == "sn") 
+        if (status == "sn" || status == "seen") 
             messageSts.src = "assets/read.svg";
-        else if (status == "recv") 
+        else if (status == "recv" || status =="recieved") 
             messageSts.src = "assets/delivered.svg";
-        else if (status == "st") 
+        else if (status == "st" || status == "ST") 
             messageSts.src = "assets/send-to-server.svg";
     }
 

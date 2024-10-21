@@ -1,8 +1,19 @@
 import { websocket } from "./net.js";
+import { getData, formatTime } from "./net.js"
 
 let typingTimer;
 const doneTypingInterval = 2000;
 
+
+function getCurrentTime() {
+    const now = Date.now();
+    const formattedTime = new Date(now).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: true 
+    });
+    return formattedTime
+}
 
 function getTimestamp(format = 'ms') {
     const now = Date.now(); // Gets current timestamp in milliseconds
@@ -48,7 +59,7 @@ template.innerHTML = /*html*/`
     }
 
 
-    #convo-messages {
+    #convo-messages-container {
         background-color: #e0e0e0;
         flex-grow: 1;
         transition: width 0.3s ease;
@@ -97,7 +108,7 @@ template.innerHTML = /*html*/`
         padding-left: 3rem;
     }
 
-    #convo-header {
+    #user-header-container {
         width: 100%;
         background-color: #f8f9fa;
         display: flex;
@@ -105,13 +116,13 @@ template.innerHTML = /*html*/`
     }
 
     .member {
-            width: 100%;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1em;
-            border-bottom: 1px solid #e9ecef;
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5em;
+        border-bottom: 1px solid #e9ecef;
     }
 
     .profile-pic {
@@ -129,15 +140,19 @@ template.innerHTML = /*html*/`
 
             object-fit: cover;
     }
-    .user-info {
+    .convo-username {
         font-weight: bold;
     }
+    
+    .convo-user-status {
+        font-size: 12px;
+    }
 
-    #user-convo {
+    #user-convo-header {
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 20px;
+        gap: 2px;
     }
     #list-icon-container .list-icon, .profile-icon-container .profile-icon {
         display: none;
@@ -212,7 +227,7 @@ template.innerHTML = /*html*/`
         
         }
 
-        #user-profile, #convo-header{
+        #user-profile, #user-header-container{
             display: none;
         }
 
@@ -314,34 +329,35 @@ template.innerHTML = /*html*/`
                 <div class="members-container"></div>
             </div>
 
-            <div id="convo-messages">
-                <div id="convo-header">
+            <div id="convo-messages-container">
+                <div id="user-header-container">
                     <div class="member">             
-                        <div id="user-convo">
+                        <div id="user-convo-header">
                             <div id="list-icon-container">
                                 <svg class="list-icon"   xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                                <path d="M3.166,2.914c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
-                                <path d="M8.745,6.099h13.255c.553,0,1-.448,1-1s-.447-1-1-1H8.745c-.553,0-1,.448-1,1s.447,1,1,1Z"/>
-                                <path d="M3.166,9.815c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
-                                <path d="M22,11H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
-                                <path d="M3.166,16.716c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
-                                <path d="M22,17.901H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
-                              </svg>
+                                    <path d="M3.166,2.914c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
+                                    <path d="M8.745,6.099h13.255c.553,0,1-.448,1-1s-.447-1-1-1H8.745c-.553,0-1,.448-1,1s.447,1,1,1Z"/>
+                                    <path d="M3.166,9.815c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
+                                    <path d="M22,11H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
+                                    <path d="M3.166,16.716c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
+                                    <path d="M22,17.901H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
+                                </svg>
                             </div>
                             <div class="profile-pic">
                                 <img id="user-image" src="assets/after.png" alt="profile picture" class="img-fluid">
                             </div>
-                            <div class="user-info">
-                                <div class="user-name">username</div>
+                            <div class="convo-user-heaader-info">
+                                <div class="convo-username">username</div>
+                                <div class="convo-user-status"> online</div>
                             </div>
-                            </div>
+                        </div>
                             <div class="profile-icon-container p-2">
                                 <img class="profile-icon" src="assets/portrait.svg" >
                             </div>
-                        </div>
+                    </div>
                 </div>
 
-                <div id="chat-conversation"> </div>
+                <div id="chat-conversation" class="p-3"> </div>
                 
                 <div id="input-message-container">
                     <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
@@ -393,14 +409,6 @@ export class chat extends HTMLElement {
 
         this.convo_list_users = [
         {
-            "userName": "mohamed",
-            "id": "5"
-        },
-        {
-            "userName": "ahmed",
-            "id": "6"
-        }, 
-        {
             "userName": "jawad",
             "id": "4"
         }, 
@@ -411,45 +419,30 @@ export class chat extends HTMLElement {
         
         this.activeMemberId = null;
         this.activeMemberUsername = null;
+        this.activeMemberstatus = null
         this.isSend = false
 
         this.username = "outman"
-        this.userId = "3"
+        this.userId = 3
 
         websocket.onmessage = (e) => {
-            const message = JSON.parse(e.data);
-                // console.log("received :: ", message)
-                    
-            switch (message.m) {
-                case "msg":
-                    this.handleIncomingMessage(message)
-                    break 
-                case "st":
-                    this.handleMessageStatus(message)
-                    break 
-                case "recv":
-                    this.handleMessageStatus(message)
-                    break 
-                case "sn":
-                    this.handleMessageStatus(message)
-                    break 
-                case "typ":
-                    this.handleTyping(message)
-                    break 
-                case "styp":
-                    this.handleTyping(message)
-                    break 
-                case "err":
-                        console.log("ther is an error in the message", message)
-                        break
-                    }  
-                }
-
-
-        this.identifier = 0
-        this.clientsMessages = new Map()
-        this.userMessages = new Map()
-
+            const message = JSON.parse(e.data);   
+            if (message.m == "msg")
+                this.handleIncomingMessage(message)
+            else if (message.m == "st" || message.m == "sn" || message.m == "recv")
+                this.handleMessageStatus(message)
+            else if (message.m == "typ")
+                this.handleTyping(message)
+            else if (message.m == "styp")
+                this.handleTyping(message)
+        }
+                
+            this.identifier = 0
+            this.clientsMessages = new Map()
+            this.databaseMessages = new Map()
+            
+            this.render();
+            this.updateUnreadMemberMessages()
     }
 
     updateScroll() {
@@ -460,9 +453,16 @@ export class chat extends HTMLElement {
     displayConvoHeader(event) {
         const profilePic = event.detail.profilePic;
 
-        const chatConversation = this.shadowRoot.querySelector('#convo-messages');
+        const userHeaderStatus = this.shadowRoot.querySelector(".convo-user-status")
+        if (!userHeaderStatus) return 
+        
+        this.activeMemberstatus = "online"
+        userHeaderStatus.textContent = this.activeMemberstatus
+        userHeaderStatus.style["color"] = "green"
+        
+        const chatConversation = this.shadowRoot.querySelector('#convo-messages-container');
         // display header and message input 
-        const convoHeader = chatConversation.querySelector('#convo-header');
+        const convoHeader = chatConversation.querySelector('#user-header-container');
         convoHeader.style.display = 'block';
         const inputMessage = chatConversation.querySelector('#input-message-container');
         inputMessage.style.display = `flex`;
@@ -470,7 +470,7 @@ export class chat extends HTMLElement {
         // display user image and name
         const userProfileImg = convoHeader.querySelector('#user-image');
         userProfileImg.src = profilePic;
-        const userName = convoHeader.querySelector('.user-name');
+        const userName = convoHeader.querySelector('.convo-username');
         userName.textContent = this.activeMemberUsername;
     }
     
@@ -485,6 +485,12 @@ export class chat extends HTMLElement {
         wpProfile.setAttribute('username', this.activeMemberUsername);
         wpProfile.setAttribute('profile-pic', profilePic);
         userProfile.appendChild(wpProfile);
+    }
+
+    async fetchData(userId, clientId) {
+        let data = await getData(userId, clientId);
+        if (!data) return
+        this.databaseMessages.set(clientId, data)
     }
 
     handleMemberClick(event) {
@@ -507,9 +513,8 @@ export class chat extends HTMLElement {
 
         // display user heeader
         this.displayConvoHeader(event)
-        
         // load member conversation
-        this.renderClientMessages(this.activeMemberId)
+        this.renderActiveUserMessages(this.activeMemberId)
         
         // /// load the profile info
         this.displayClientProfile(event)
@@ -517,6 +522,50 @@ export class chat extends HTMLElement {
 
         // close overlay
         this.handleOverlayClick();
+    }
+
+    loadOldMessages(messages, userId, clientId) {
+        if (!messages || messages.length == 0) return 
+    
+        const conversation = this.shadowRoot.querySelector('#chat-conversation');
+        if (!conversation) return 
+        
+
+        if (messages[0].sender != clientId && messages[0].recipient != clientId)
+        {
+            console.log("user id ", userId, "client ", clientId)
+            console.log(messages[0])
+            return 
+        }
+        messages.forEach(message => {
+            if (message.sender == clientId) {
+                const clientMessageComponent = document.createElement('wc-client-message')
+                clientMessageComponent.setMessage(message.content, formatTime(message.time))
+                conversation.appendChild(clientMessageComponent)
+                if (message.status != "seen" && message.status != "sn")
+                    this.markeAsRead(message)
+            }
+            else {
+                const wpUserComponent = document.createElement('wc-user-message');
+                wpUserComponent.addMessage(message.content, formatTime(message.time), message.status);
+                conversation.appendChild(wpUserComponent);
+            }
+    
+        })
+    }
+
+    renderOldMessages(messages) {
+        const chatConversation = this.shadowRoot.querySelector("#convo-messages-container")
+        const messagesBody = chatConversation.querySelector('#chat-conversation');
+        messagesBody.innerHTML = ``
+        
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        // const targetMember = membersContainer.querySelector(`wc-chat-member[id="${id}"]`)
+
+        this.loadOldMessages(messages, this.userId, this.activeMemberId)
+        messagesBody.appendChild(chatConvoComponent)
+
+        this.updateScroll()
     }
 
     handleSearch(event)  {
@@ -535,7 +584,6 @@ export class chat extends HTMLElement {
     }
 
     connectedCallback() {
-        this.render();
         this.shadowRoot.addEventListener('memberClicked', this.handleMemberClick.bind(this));
         
         const mainSearch = this.shadowRoot.querySelector('#convo-search');
@@ -548,6 +596,7 @@ export class chat extends HTMLElement {
         this.addOffcanvasEventListener()
         
     }
+
     addOffcanvasEventListener() {
         const profileOffcanvasCloseBtn = this.shadowRoot.querySelector('#profileOffcanvasCloseBtn');
         profileOffcanvasCloseBtn.addEventListener('click', this.handleProfileCloseOffcanvas.bind(this));
@@ -571,8 +620,34 @@ export class chat extends HTMLElement {
         sendBtn.addEventListener('click', this.sendMessage.bind(this));
         
         const inputMessage = this.shadowRoot.querySelector('#message-input');
-        inputMessage.addEventListener('input', this.displaySendBtn.bind(this));
-        inputMessage.addEventListener('keypress', this.handleKeyPress.bind(this));
+        inputMessage.addEventListener('input', this.handleMessageSendbtn.bind(this));
+        inputMessage.addEventListener('keypress', (e) => {
+            if (e.key == "Enter")
+                this.sendMessage(e);
+        });
+    }
+
+    displayUserIsTyping(clientId) {
+        if (!this.activeMember || this.activeMemberId != clientId) return 
+        
+        const userHeaderStatus = this.shadowRoot.querySelector(".convo-user-status")
+        if (!userHeaderStatus) return 
+        
+        userHeaderStatus.textContent = "typing..."
+        userHeaderStatus.style["color"] = "green"
+    }
+    
+    hideIsTyping(clientId) {
+
+        const userHeaderStatus = this.shadowRoot.querySelector(".convo-user-status")
+        if (!userHeaderStatus) return
+
+        if (userHeaderStatus.textContent == "typing...")
+            userHeaderStatus.textContent = "online" // update it to the last status the user was
+         
+        // update the status of the user
+        userHeaderStatus.textContent = "online"
+        userHeaderStatus.style["color"] = "green"
     }
 
     handleTyping(message) {
@@ -581,49 +656,65 @@ export class chat extends HTMLElement {
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         const memberElement = membersContainer.querySelector(`wc-chat-member[id="${message.clt}"]`);
 
-        console.log("chat member :: ", memberElement)
-        if (message.m == "typ")
+        if (message.m == "typ"){
             memberElement.displayIsTyping()
-        else
+            this.displayUserIsTyping(message.clt)
+        }
+        else {
             memberElement.stopIsTyping()
+            this.hideIsTyping(message.clt)
+        }
     }
 
-    handleIncomingMessage(message) {
-        // console.log ("new message:: ", message);
+    displayClientMessage(message) {
+        const userId = message.clt;
+        const messageType = message.tp;
+        const messageContent = message.cnt;
+        const messageIdentifier = message.identifier
+        const time = message.time
         
-        let response = {
-            "m": "recv",
-            "clt": message.clt,
-            "msg": message.msg
-        }
-        websocket.send(JSON.stringify(response));
-        
-        if (message.clt == this.activeMemberId)
-            this.activeMember.updateLastMessage(message)
+        const conversation = this.shadowRoot.querySelector('#chat-conversation');
+        if (!conversation) return
 
-        const targrtClient = this.convo_list_users.find(user => user.id == message.clt)
-        const membersContainer = this.shadowRoot.querySelector('.members-container');
-        const memberElement = membersContainer.querySelector(`wc-chat-member[username="${targrtClient.userName}"]`);
+        const clientMessageComponent = document.createElement('wc-client-message')
+        setTimeout(() => {
+            clientMessageComponent.setMessage(messageContent, time)
+            conversation.appendChild(clientMessageComponent)
+        })
+    }
+
+    handleIncomingMessage(message) {        
+        console.log("recieved  ::", message)
+
+        message["time"] =  getCurrentTime()
+        this.markeAsRecieved(message)
+        message["status"] = "recv"
+
+        const usersContainer = this.shadowRoot.querySelector('.members-container');
         
-        const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
-        if (!conversation) {
-            return this.updateUnreadMessages(targrtClient, message)
+        const recipient = this.convo_list_users.find(user => user.id == message.clt)
+        if (!recipient) return 
+
+        const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
+        
+        if (!this.activeMemberId || recipient.id != this.activeMember.id) {
+            this.updateUnreadMessages(recipient, message)
+            return 
         }
+
+        if (message.clt == this.activeMemberId)
+            this.activeMember.updateLastMessage(message, this.userId)
         
-        const client = this.convo_list_users.find(user => user.id == message.clt)
-        if (!client) return 
-        
-        if (client.id != this.activeMember.id) {
-            return this.updateUnreadMessages(targrtClient, message)
-        }
-        
-        conversation.displayClientMessage(message);
-        
+        this.displayClientMessage(message);
+        message["status"] = "sn"
         this.storeMessage(this.activeMemberId, message, "client")
 
-        memberElement.hideMessageCounter()
-
-        response = {
+        recipientComponent.hideMessageCounter()
+        this.markeAsRead(message)
+    }
+    
+    markeAsRead(message) {
+        const response = {
             "m": "sn",
             "clt": this.activeMemberId,
             "msg": message.msg
@@ -631,7 +722,17 @@ export class chat extends HTMLElement {
         websocket.send(JSON.stringify(response));    
     }
 
+    markeAsRecieved(message) {
+        const response = {
+            "m": "recv",
+            "clt": message.clt,
+            "msg": message.msg
+        }
+        websocket.send(JSON.stringify(response));
+    }
+
     storeMessage(key, value, type) {
+        console.log("storing .. ", value)
         if (!this.clientsMessages.has(key)) {
             this.clientsMessages.set(key, []);
         }
@@ -639,19 +740,16 @@ export class chat extends HTMLElement {
         this.clientsMessages.get(key).push(value);
     }
     
-    updateUnreadMessages(targrtClient, message) {
-        this.storeMessage(targrtClient.id , message, "client")
+    updateUnreadMessages(recipient, message) {
+        this.storeMessage(recipient.id , message, "client")
 
-        
-        const membersContainer = this.shadowRoot.querySelector('.members-container');
-        const memberElement = membersContainer.querySelector(`wc-chat-member[username="${targrtClient.userName}"]`);
-        
-        // console.log("messages ", memberElement)
-        
-        memberElement.displayMessageCounter(1)
-        memberElement.updateLastMessage(message)
+        const usersContainer = this.shadowRoot.querySelector('.members-container');
+        const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
 
-        this.moveMemberElementToTop(targrtClient)
+        recipientComponent.displayMessageCounter(1)
+        recipientComponent.updateLastMessage(message, this.userId)
+
+        this.moveMemberElementToTop(recipient)
     }
 
     moveMemberElementToTop(targrtClient) {
@@ -677,94 +775,135 @@ export class chat extends HTMLElement {
         return undefined;
     }
 
-    handleMessageStatus(message) {
-        console.log ("updating message status :: ", message);
-        
-        const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
-        
-        const userId = message.clt
-        
-        console.log("looking ", this.activeMemberId)
-        
-        const activeMember = this.getMessagesById(userId)
-        if (!activeMember) return 
-        console.log("member to update", activeMember)
+    handleMessageStatus(message) {        
+        const activeMemberMessages = this.getMessagesById(message.clt)
+        if (!activeMemberMessages) return 
 
-        let messageToUpdate = activeMember.find(msg => msg.identifier == message.identifier)
+        let messageToUpdate = activeMemberMessages.find(msg => msg.identifier == message.identifier)
         if (!messageToUpdate)
-            messageToUpdate = activeMember.find(msg => msg.msg == message.msg)
+            messageToUpdate = activeMemberMessages.find(msg => msg.msg == message.msg)
         
-        if (messageToUpdate) {
-            messageToUpdate["status"] = message.m
-            messageToUpdate["msg"] = message.msg
-        }
-
-        // render the conversation
+        if (!messageToUpdate) return
         
-        this.renderClientMessages(userId)
-        // console.log("msg to update :: ", messageToUpdate)
-        
-        // conversation.updateMessageStatus(message)
+        messageToUpdate["status"] = message.m
+        messageToUpdate["msg"] = message.msg
+        this.renderActiveUserMessages(message.clt)
     }
 
-    renderClientMessages(id) {
+    getUnreadMessagesCount(id) {
+        // console.log(this.databaseMessages)
+        const array = this.databaseMessages.get(id)
+        if (!array) return 0
+        let count = 0
 
-        const chatConversation = this.shadowRoot.querySelector("#convo-messages")
+        for (let i = array.length - 1; i >= 0; --i) {
+            const item = array[i]
+            // console.log(item)
+            if (item.sender == id) {
+                if (item.status == "seen" || item.status == "sn")
+                    return count
+                count++;
+            }
+            else
+                return count
+        }
+        return count;
+    }
+
+    loadClientMessages(messages, activeMemberId) {
+        if (!messages) return 
+        
+        const conversation = this.shadowRoot.querySelector('#chat-conversation');
+        if (!conversation) return 
+        
+        messages.forEach(message => {
+            if (message.type == "client") {
+                const wpClientComponent = document.createElement('wc-client-message')
+                wpClientComponent.setMessage(message.cnt, message.time)
+                conversation.appendChild(wpClientComponent)
+               
+                if (message.status != "seen" && message.status != "sn")
+                    this.markeAsRead(message)
+            }
+            else {
+                const wpUserComponent = document.createElement('wc-user-message');
+                wpUserComponent.addMessage(message.cnt, message.time, message.status);
+                conversation.appendChild(wpUserComponent);
+            }
+
+        });
+    }
+    renderActiveUserMessages(id) {
+
+        const chatConversation = this.shadowRoot.querySelector("#convo-messages-container")
         const messagesBody = chatConversation.querySelector('#chat-conversation');
         messagesBody.innerHTML = ``
         
         let targetMemberMessages = this.getMessagesById(id)
-        
+
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         const targetMember = membersContainer.querySelector(`wc-chat-member[id="${id}"]`)
+        
+        const databaseMessages = this.databaseMessages.get(this.activeMemberId)
+        
+        this.loadOldMessages(databaseMessages, this.userId, this.activeMemberId)
 
-        const chatConvoComponent = document.createElement('wc-chat-conversation');
-        chatConvoComponent.setAttribute('username', this.activeMemberUsername);
-        chatConvoComponent.loadClientMessages(targetMemberMessages, id)
         if (targetMember)
             targetMember.hideMessageCounter()
-        messagesBody.appendChild(chatConvoComponent);
         
+        if (databaseMessages) {
+            const lastMessage = databaseMessages[databaseMessages.length - 1]
+            // console.log("last message :: ", lastMessage)
+            if (targetMember)
+                targetMember.updateLastMessage(lastMessage, this.userId)
+        }
         if (targetMemberMessages) {
             const lastMessage = targetMemberMessages[targetMemberMessages.length - 1]
-            console.log("last message :: ", lastMessage)
+            this.loadClientMessages(targetMemberMessages, id)
+            // console.log("last message :: ", lastMessage)
             if (targetMember)
-                targetMember.updateLastMessage(lastMessage)
+                targetMember.updateLastMessage(lastMessage, this.userId)
         }
+        this.updateScroll()
+    }
+
+    displayUserMessage(message) {
+        const conversation = this.shadowRoot.querySelector('#chat-conversation');
+        const UserMessageComponent = document.createElement('wc-user-message');
+        UserMessageComponent.addMessage(message.cnt, message.time, message.status);
+        UserMessageComponent.setAttribute("message-id",  message.identifier);
+        conversation.appendChild(UserMessageComponent);
     }
 
     sendMessage(event) {
         const input = this.shadowRoot.querySelector('#message-input');
 
-        const msg = input.value;
+        const message = input.value;
         input.value = "";
         input.focus();
 
-        if (msg) {
-            const conversation = this.shadowRoot.querySelector('wc-chat-conversation');
-            if (conversation) {
-                
-                this.identifier = getTimestamp()
-                const message = {
-                    "m": "msg",
-                    "clt": this.activeMemberId, // client id
-                    "tp": "txt",
-                    "identifier": this.username + this.identifier,
-                    "cnt": msg,
-                    "status": "pending"
-                }
-
-                this.storeMessage(this.activeMemberId, message, "user")
-
-                conversation.displayUserMessage(message);
-                websocket.send(JSON.stringify(message));
-                
-                this.updateScroll();
+        if (message) {
+            this.identifier = getTimestamp()
+            const response = {
+                "m": "msg",
+                "clt": this.activeMemberId, // client id
+                "tp": "txt",
+                "identifier": this.username + this.identifier,
+                "cnt": message,
+                "status": "pending",
+                "time": getCurrentTime()
             }
+            websocket.send(JSON.stringify(response));
+
+            this.storeMessage(this.activeMemberId, response, "user")
+            this.displayUserMessage(message);
+
+            this.updateScroll();
         }
     }
 
-    displaySendBtn(event) {
+
+    handleMessageSendbtn(event) {
         const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
         
         clearTimeout(typingTimer);
@@ -772,42 +911,24 @@ export class chat extends HTMLElement {
         const message = event.target.value;
         if (message) {
             sendBtnIcon.classList.add('visible');
+                websocket.send(JSON.stringify({
+                    "m": "typ", "clt": this.activeMemberId
+                }));
             
-            if (this.isSend == false) {
-                const response = {
-                    "m": "typ",
-                    "clt": this.activeMemberId
-                }
-                websocket.send(JSON.stringify(response));
-                this.isSend = true;
-            }
-            
-            if (typingTimer) {
+            if (typingTimer)
                 clearTimeout(typingTimer);
+            
+            typingTimer = setTimeout( () => {
+                websocket.send(JSON.stringify({
+                    "m": "styp", "clt": this.activeMemberId
+                }));
             }
-            const id = this.activeMemberId
-            typingTimer = setTimeout(
-                this.doneTyping.bind(this)
-            , doneTypingInterval);
+            , doneTypingInterval );
 
         }
         else {
-            sendBtnIcon.classList.remove('visible');
+            sendBtnIcon.classList.remove('visible')
         }
-    }
-
-    doneTyping() {
-        console.log("stop typing ...")
-        this.isSend = false
-        const response = {
-            "m": "styp",
-            "clt": this.activeMemberId
-        }
-        websocket.send(JSON.stringify(response));
-    }
-    handleKeyPress(event) {
-        if (event.key == "Enter")
-            this.sendMessage(event);
     }
 
     handleListOffcanvas(event) {
@@ -815,7 +936,6 @@ export class chat extends HTMLElement {
         
         if (this.isActive == false)  {
             this.convo_list_users.forEach(username => {
-                
                 const memberElement = document.createElement('wc-chat-member');
                 memberElement.setAttribute('username', username.userName);
                 memberElement.setAttribute('profile-pic', `assets/after.png`);
@@ -834,7 +954,7 @@ export class chat extends HTMLElement {
     handleOffcanvasSearch(event) {
         // need to be fixed ;
         const searchQuery = event.target.value.toLowerCase();
-        console.log("search ::", searchQuery);
+        // console.log("search ::", searchQuery);
 
         const membersContainer = this.shadowRoot.querySelector('#list-offcanvas-body');
         const members = membersContainer.querySelectorAll('wc-chat-member');
@@ -865,7 +985,7 @@ export class chat extends HTMLElement {
         const username = this.convo_list_users[1];
 		const profilePic = "assets/after.png";
 
-        console.log(username);
+        // console.log(username);
         const cprofileOffcanvasBody = this.shadowRoot.querySelector('.custom-offcanvas-body');
         cprofileOffcanvasBody.innerHTML = ``;
 
@@ -894,21 +1014,69 @@ export class chat extends HTMLElement {
     }
 
 
-    render() {
+    async render() {
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         
         //// for test
         const username = "mohamed";
         const profilePic = "assets/after.png";
-
-        this.convo_list_users.forEach(username => {
-
+        
+        this.convo_list_users.forEach(username => {   
             const memberElement = document.createElement('wc-chat-member');
             memberElement.setAttribute('username', username.userName);
             memberElement.setAttribute('profile-pic', `assets/after.png`);
             memberElement.setAttribute('id', username.id);
             membersContainer.appendChild(memberElement);
-
         });
     }
+
+    async updateUnreadMemberMessages() {
+        const membersContainer = this.shadowRoot.querySelector('.members-container');
+        for (let user of this.convo_list_users) {
+            if (!this.databaseMessages.has(user.id)){
+                
+                await this.fetchData(this.userId, user.id)
+
+                const member =  membersContainer.querySelector(`wc-chat-member[username="${user.userName}"]`);
+                const messages = this.databaseMessages.get(user.id)
+                if (messages) {
+                    member.displayMessageCounter(this.getUnreadMessagesCount(user.id))
+                    member.updateLastMessage(messages.at(-1), this.userId)
+                }
+            }
+        }
+    }
 }
+
+
+
+
+    /**
+     
+    id  = setTimeout(<outer>() => {
+        fn()
+        if (is_typing)
+            id = setTimeout(outer)
+    }, 1000)
+
+    t0 = Date.now()
+    input.oninput = () => {
+        
+        if (!is_typing) {
+            is_typing = true
+            id  = setTimeout(<outer>() => {
+                fn()
+                if (is_typing)
+                    id = setTimeout(outer)
+            })
+        }
+
+        clearTimeout(tid)
+        tid = setTimout(() => {
+            is_typing = false
+        }, 1000)
+
+
+    }
+
+     */

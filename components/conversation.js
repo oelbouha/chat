@@ -54,10 +54,52 @@ export class conversation extends HTMLElement {
 	connectedCallback() {
 		
 	}
+    formatTime(time) {
+        const date = new Date(time); // Parse the ISO string
+
+        let hours = date.getUTCHours(); // Get hours in UTC
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0'); // Get minutes and ensure two digits
+        const ampm = hours >= 12 ? 'PM' : 'AM'; // Determine AM/PM
+    
+        // Convert hours to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Convert hour '0' to '12'
+    
+        return `${hours}:${minutes} ${ampm}`; // Return formatted time
+    }
+
+    loadOldMessages(messages, userId, clientId) {
+        if (!messages || messages.length == 0) return 
+    
+        const conversation = this.shadowRoot.querySelector('#conversation');
+        if (!conversation) return 
+        
+
+        if (messages[0].sender != clientId && messages[0].recipient != clientId)
+        {
+            console.log("user id ", userId, "client ", clientId)
+            console.log(messages[0])
+            return 
+        }
+        messages.forEach(message => {
+            console.log(message)
+            if (message.sender == clientId) {
+                const wpClientComponent = document.createElement('wc-client-message')
+                wpClientComponent.setMessage(message.content, this.formatTime(message.time))
+                conversation.appendChild(wpClientComponent)
+            }
+            else {
+                const wpUserComponent = document.createElement('wc-user-message');
+                wpUserComponent.addMessage(message.content, this.formatTime(message.time), message.status);
+                conversation.appendChild(wpUserComponent);
+            }
+    
+        })
+    }
 
     loadClientMessages(messages, activeMemberId) {
         if (!messages) return 
-
+        
         const conversation = this.shadowRoot.querySelector('#conversation');
         if (!conversation) return 
         
@@ -99,37 +141,7 @@ export class conversation extends HTMLElement {
         });
     }
     
-    // updateMessageStatus(message) {
-    //     const identifier = message.identifier
-    //     const messageStatus = message.m
-        
-        
-    //     const conversation = this.shadowRoot.querySelector('#conversation');
-
-    //     let id = "wc-user-message[message-id=\"" + message.msg + "\"]"
-
-    //     if (message.m == "st") {
-    //         id = "wc-user-message[message-id=\"" + identifier + "\"]" 
-            
-    //         const messageToUpdate = conversation.querySelector(id);
-    //         if (messageToUpdate) {
-    //             messageToUpdate.updateMessageStatus(messageStatus)
-    //             messageToUpdate.setAttribute('message-id', message.msg)
-    //         }
-    //         return 
-    //     }
-        
-    //     const messageToUpdate = conversation.querySelector(id);
-        
-    //     if (messageToUpdate) {
-    //         messageToUpdate.updateMessageStatus(messageStatus)
-    //     }
-    // }
-
-    
-    displayUserMessage(message) {
-        // this.messages.push(message)
-        
+    displayUserMessage(message) {        
         const conversation = this.shadowRoot.querySelector('#conversation');
         
         const userId = message.clt;
@@ -160,26 +172,26 @@ export class conversation extends HTMLElement {
     }
 
 	render() {
-        const username = this.getAttribute('username');
-        const userProfilePic = this.getAttribute('profile-pic');
+        // const username = this.getAttribute('username');
+        // const userProfilePic = this.getAttribute('profile-pic');
         
-        const conversation = this.shadowRoot.querySelector('#conversation');
-        conversation.textContent = ''
+        // const conversation = this.shadowRoot.querySelector('#conversation');
+        // conversation.textContent = ''
         
-        setTimeout(() => {
-            this.messages.forEach((message) => {
-                const wpUserComponent = document.createElement('wc-user-message');
-                wpUserComponent.addMessage(message.cnt);
-                wpUserComponent.updateMessageStatus(message.m)
-                conversation.appendChild(wpUserComponent);
-            });
+        // setTimeout(() => {
+        //     this.messages.forEach((message) => {
+        //         const wpUserComponent = document.createElement('wc-user-message');
+        //         wpUserComponent.addMessage(message.cnt);
+        //         wpUserComponent.updateMessageStatus(message.m)
+        //         conversation.appendChild(wpUserComponent);
+        //     });
 
-            this.clientMessages.forEach((message) => {
-                const wpClientComponent = document.createElement('wc-client-message');
-                wpClientComponent.setMessage(message.cnt);
-                conversation.appendChild(wpClientComponent);
-            });
-        })
+        //     this.clientMessages.forEach((message) => {
+        //         const wpClientComponent = document.createElement('wc-client-message');
+        //         wpClientComponent.setMessage(message.cnt);
+        //         conversation.appendChild(wpClientComponent);
+        //     });
+        // })
 	}
 
     static get observedAttributes() {

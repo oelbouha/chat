@@ -90,12 +90,10 @@ export class userMessage extends HTMLElement {
 		super();
 		this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(userMessageTemplate.content.cloneNode(true));
-
-        this.messageTime = "10:30 AM"
 	}
 
     connectedCallback() {
-        this.render();
+
     }
 
 	render() {
@@ -105,32 +103,36 @@ export class userMessage extends HTMLElement {
         userElement.style.display = 'flex';
 	}
 
-    addMessage(message) {
+    addMessage(message, time, status) {
         
         const user = this.getAttribute("user");
 
         const userElement = this.shadowRoot.querySelector('.user-message');
         userElement.style.display = 'flex';
-
+        
         const userMessage = this.shadowRoot.querySelector('.user-msg');
         userMessage.textContent = message;
         
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
-        userMessageTime.textContent = this.messageTime;
-
-    }
-
-    setMessageTime(time) {
-        this.messageTime = time
+        userMessageTime.textContent = time;
+        
+        const messageSts = this.shadowRoot.querySelector('.message-status-icon');
+        if (!messageSts) return 
+        if (status == "sn" || status == "seen") 
+            messageSts.src = "assets/read.svg";
+        else if (status == "recv" || status =="recieved") 
+            messageSts.src = "assets/delivered.svg";
+        else if (status == "st" || status == "ST") 
+            messageSts.src = "assets/send-to-server.svg";
     }
     
     updateMessageStatus(status) {
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        if (status == "sn") 
+        if (status == "sn" || status == "seen") 
             messageSts.src = "assets/read.svg";
-        else if (status == "recv") 
+        else if (status == "recv" || status =="recieved") 
             messageSts.src = "assets/delivered.svg";
-        else if (status == "st") 
+        else if (status == "st" || status == "ST") 
             messageSts.src = "assets/send-to-server.svg";
     }
 
