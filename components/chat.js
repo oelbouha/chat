@@ -1,19 +1,11 @@
 import { websocket } from "./net.js";
-import { getData, formatTime } from "./net.js"
+import { getData, formatTime, getCurrentTime } from "./net.js"
 
 let typingTimer;
 const doneTypingInterval = 2000;
 
 
-function getCurrentTime() {
-    const now = Date.now();
-    const formattedTime = new Date(now).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: true 
-    });
-    return formattedTime
-}
+
 
 function getTimestamp(format = 'ms') {
     const now = Date.now(); // Gets current timestamp in milliseconds
@@ -437,12 +429,12 @@ export class chat extends HTMLElement {
                 this.handleTyping(message)
         }
                 
-            this.identifier = 0
-            this.clientsMessages = new Map()
-            this.databaseMessages = new Map()
-            
-            this.render();
-            this.updateUnreadMemberMessages()
+        this.identifier = 0
+        this.clientsMessages = new Map()
+        this.databaseMessages = new Map()
+        
+        this.render();
+        this.updateUnreadMemberMessages()
     }
 
     updateScroll() {
@@ -503,13 +495,11 @@ export class chat extends HTMLElement {
         const clickedMember = event.target;
         clickedMember.activate();
         if (clickedMember === this.activeMember) return 
+
         this.activeMember = clickedMember;
 
         this.activeMemberId = event.detail.id
         this.activeMemberUsername = event.detail.username;
-
-        // console.log("member active :: ", this.activeMember)
-        // console.log ("userName", this.activeMemberUsername, this.activeMemberId)
 
         // display user heeader
         this.displayConvoHeader(event)
@@ -519,7 +509,6 @@ export class chat extends HTMLElement {
         // /// load the profile info
         this.displayClientProfile(event)
       
-
         // close overlay
         this.handleOverlayClick();
     }
@@ -651,8 +640,6 @@ export class chat extends HTMLElement {
     }
 
     handleTyping(message) {
-        console.log(message)
-
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         const memberElement = membersContainer.querySelector(`wc-chat-member[id="${message.clt}"]`);
 
@@ -667,28 +654,22 @@ export class chat extends HTMLElement {
     }
 
     displayClientMessage(message) {
-        const userId = message.clt;
-        const messageType = message.tp;
-        const messageContent = message.cnt;
-        const messageIdentifier = message.identifier
-        const time = message.time
-        
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
         if (!conversation) return
 
         const clientMessageComponent = document.createElement('wc-client-message')
         setTimeout(() => {
-            clientMessageComponent.setMessage(messageContent, time)
+            clientMessageComponent.setMessage(message.cnt, message.time)
             conversation.appendChild(clientMessageComponent)
         })
     }
 
     handleIncomingMessage(message) {        
-        console.log("recieved  ::", message)
+        this.storeMessage(this.activeMemberId, message, "client")
+        console.log("new message recieved  ::", message)
 
         message["time"] =  getCurrentTime()
         this.markeAsRecieved(message)
-        message["status"] = "recv"
 
         const usersContainer = this.shadowRoot.querySelector('.members-container');
         
@@ -701,19 +682,14 @@ export class chat extends HTMLElement {
             this.updateUnreadMessages(recipient, message)
             return 
         }
-
-        if (message.clt == this.activeMemberId)
-            this.activeMember.updateLastMessage(message, this.userId)
-        
-        this.displayClientMessage(message);
-        message["status"] = "sn"
-        this.storeMessage(this.activeMemberId, message, "client")
-
+        this.displayClientMessage(message)
+        this.activeMember.updateLastMessage(message, this.userId)
         recipientComponent.hideMessageCounter()
         this.markeAsRead(message)
     }
     
     markeAsRead(message) {
+        message["status"] = "sn"
         const response = {
             "m": "sn",
             "clt": this.activeMemberId,
@@ -723,6 +699,7 @@ export class chat extends HTMLElement {
     }
 
     markeAsRecieved(message) {
+        message["status"] = "recv"
         const response = {
             "m": "recv",
             "clt": message.clt,
@@ -732,7 +709,6 @@ export class chat extends HTMLElement {
     }
 
     storeMessage(key, value, type) {
-        console.log("storing .. ", value)
         if (!this.clientsMessages.has(key)) {
             this.clientsMessages.set(key, []);
         }
@@ -746,7 +722,7 @@ export class chat extends HTMLElement {
         const usersContainer = this.shadowRoot.querySelector('.members-container');
         const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
 
-        recipientComponent.displayMessageCounter(1)
+        recipientComponent.displayMessageCounter(1, message)
         recipientComponent.updateLastMessage(message, this.userId)
 
         this.moveMemberElementToTop(recipient)
@@ -775,19 +751,23 @@ export class chat extends HTMLElement {
         return undefined;
     }
 
-    handleMessageStatus(message) {        
-        const activeMemberMessages = this.getMessagesById(message.clt)
+    handleMessageStatus(message) {
+        
+        console.log("updating message status : ", message)
+        const userId = message.clt
+        const activeMemberMessages = this.getMessagesById(userId)
         if (!activeMemberMessages) return 
 
         let messageToUpdate = activeMemberMessages.find(msg => msg.identifier == message.identifier)
         if (!messageToUpdate)
             messageToUpdate = activeMemberMessages.find(msg => msg.msg == message.msg)
-        
         if (!messageToUpdate) return
         
         messageToUpdate["status"] = message.m
         messageToUpdate["msg"] = message.msg
-        this.renderActiveUserMessages(message.clt)
+
+        if (message.clt == this.activeMemberId)
+            this.renderActiveUserMessages(userId)
     }
 
     getUnreadMessagesCount(id) {
@@ -798,7 +778,6 @@ export class chat extends HTMLElement {
 
         for (let i = array.length - 1; i >= 0; --i) {
             const item = array[i]
-            // console.log(item)
             if (item.sender == id) {
                 if (item.status == "seen" || item.status == "sn")
                     return count
@@ -846,7 +825,13 @@ export class chat extends HTMLElement {
         
         const databaseMessages = this.databaseMessages.get(this.activeMemberId)
         
+        if (targetMember != this.activeMember) {
+            // targetMember.displayMessageCounter(1)
+            return            
+        }
+
         this.loadOldMessages(databaseMessages, this.userId, this.activeMemberId)
+
 
         if (targetMember)
             targetMember.hideMessageCounter()
@@ -869,9 +854,12 @@ export class chat extends HTMLElement {
 
     displayUserMessage(message) {
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
+
         const UserMessageComponent = document.createElement('wc-user-message');
+        
         UserMessageComponent.addMessage(message.cnt, message.time, message.status);
         UserMessageComponent.setAttribute("message-id",  message.identifier);
+        
         conversation.appendChild(UserMessageComponent);
     }
 
@@ -896,8 +884,6 @@ export class chat extends HTMLElement {
             websocket.send(JSON.stringify(response));
 
             this.storeMessage(this.activeMemberId, response, "user")
-            this.displayUserMessage(message);
-
             this.updateScroll();
         }
     }
@@ -1040,7 +1026,8 @@ export class chat extends HTMLElement {
                 const member =  membersContainer.querySelector(`wc-chat-member[username="${user.userName}"]`);
                 const messages = this.databaseMessages.get(user.id)
                 if (messages) {
-                    member.displayMessageCounter(this.getUnreadMessagesCount(user.id))
+                    // console.log("last msg :: ", messages)
+                    member.displayMessageCounter(this.getUnreadMessagesCount(user.id), messages.at(-1))
                     member.updateLastMessage(messages.at(-1), this.userId)
                 }
             }

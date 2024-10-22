@@ -94,28 +94,18 @@ export class userMessage extends HTMLElement {
 
     connectedCallback() {
 
-    }
-
-	render() {
-        const user = this.getAttribute("user");
-
-        const userElement = this.shadowRoot.querySelector('.user-message');
-        userElement.style.display = 'flex';
-	}
+    }  
 
     addMessage(message, time, status) {
         
         const user = this.getAttribute("user");
-
-        const userElement = this.shadowRoot.querySelector('.user-message');
-        userElement.style.display = 'flex';
         
         const userMessage = this.shadowRoot.querySelector('.user-msg');
         userMessage.textContent = message;
         
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
         userMessageTime.textContent = time;
-        
+
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
         if (!messageSts) return 
         if (status == "sn" || status == "seen") 
@@ -124,6 +114,9 @@ export class userMessage extends HTMLElement {
             messageSts.src = "assets/delivered.svg";
         else if (status == "st" || status == "ST") 
             messageSts.src = "assets/send-to-server.svg";
+        
+        const userElement = this.shadowRoot.querySelector('.user-message');
+        userElement.style.display = 'flex';
     }
     
     updateMessageStatus(status) {
