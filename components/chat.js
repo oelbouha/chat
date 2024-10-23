@@ -494,27 +494,29 @@ export class chat extends HTMLElement {
     }
 
     handleMemberClick(event) {
-        const profilePic = event.detail.profilePic;
+        const profilePic = event.detail.profilePic
 
         if (this.activeMember) {
             this.activeMember.deactivate();
         }
 
-        const clickedMember = event.target;
+        const clickedMember = event.target
         clickedMember.activate();
         if (clickedMember === this.activeMember) return 
 
-        this.activeMember = clickedMember;
+        this.activeMember = clickedMember
 
         this.activeMemberId = event.detail.id
-        this.activeMemberUsername = event.detail.username;
+        this.activeMemberUsername = event.detail.username
 
         // console.debug(`active member : ${this.activeMemberUsername}`)
+        
         // display user heeader
         this.displayConvoHeader(event)
+        
         // load member conversation
         this.renderActiveUserMessages()
-        
+
         // /// load the profile info
         this.displayClientProfile(event)
       
@@ -630,10 +632,8 @@ export class chat extends HTMLElement {
         if (!conversation) return
 
         const clientMessageComponent = document.createElement('wc-client-message')
-        setTimeout(() => {
-            clientMessageComponent.setMessage(message.cnt, message.time)
-            conversation.appendChild(clientMessageComponent)
-        })
+        clientMessageComponent.setMessage(message.cnt, message.time)
+        conversation.appendChild(clientMessageComponent)
     }
 
     handleIncomingMessage(message) {        
@@ -732,8 +732,6 @@ export class chat extends HTMLElement {
     }
 
     handleMessageStatus(message) {
-        console.log("updating msg status :: ", message)
-
         const userId = message.clt
         const activeMemberMessages = this.getMessagesById(userId)
         if (!activeMemberMessages) {
@@ -760,8 +758,16 @@ export class chat extends HTMLElement {
             return
         }
 
-        if (message.clt == this.activeMemberId)
-            this.renderActiveUserMessages()
+        if (message.clt == this.activeMemberId) {
+            const conversation = this.shadowRoot.querySelector("#chat-conversation")
+            let messageComponent = conversation.querySelector(`wc-user-message[message-id="${message.identifier}"]`)
+            if (!messageComponent)
+                messageComponent = conversation.querySelector(`wc-user-message[message-id="${message.msg}"]`)
+            if (messageComponent) {
+                messageComponent.remove()
+                this.displayUserMessage(messageToUpdate)
+            }
+        }
         else {
             const usersContainer = this.shadowRoot.querySelector('.members-container');
             const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
@@ -846,6 +852,8 @@ export class chat extends HTMLElement {
         const UserMessageComponent = document.createElement('wc-user-message');
         UserMessageComponent.addMessage(message.cnt, message.time, message.status);
         UserMessageComponent.setAttribute("message-id",  message.identifier);
+        if (message.msg)
+            UserMessageComponent.setAttribute("message-id",  message.msg);
         
         conversation.appendChild(UserMessageComponent);
     }
