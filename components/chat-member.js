@@ -145,11 +145,7 @@ export class chatMember extends HTMLElement {
             lastMessageTag.textContent = ""
             return ;
         }
-        lastMessageTag.textContent = this.lastMessage.cnt
-        if (this.lastMessage.type == "user") {
-            const msgIcon = this.shadowRoot.querySelector("#msg-icon")
-            msgIcon.style.display = "block"
-        }
+        this.updateLastMessage(this.lastMessage, this.lastMessage.clt)
     }
     
 	deactivate() {
@@ -175,7 +171,7 @@ export class chatMember extends HTMLElement {
     updateLastMessage(message, userId) {
         if (!message) return
 
-        console.log("update last msg ::", message)
+        // console.log("update last msg ::", message)
         let messageContent = message.cnt;
         if (!messageContent)
             messageContent = message.content
@@ -196,7 +192,7 @@ export class chatMember extends HTMLElement {
         if (messageContent.length > 20)
             msg  = messageContent.slice(0, 20) + "..."
         lastMessageTag.textContent = msg
-        lastMessageTag.style["color"] = "#6c757d" // #6c757d
+        lastMessageTag.style["color"] = "#6c757d"
     }
 
     hideMessageCounter() {

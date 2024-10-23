@@ -3,6 +3,7 @@ import { getData, formatTime, getCurrentTime } from "./net.js"
 
 let typingTimer;
 const doneTypingInterval = 2000;
+let typingTime;
 
 
 
@@ -404,6 +405,10 @@ export class chat extends HTMLElement {
             "userName": "jawad",
             "id": "4"
         }, 
+        {
+            "userName": "khalid",
+            "id": "10"
+        }, 
         ];
 
         this.activeMember = null;
@@ -483,6 +488,9 @@ export class chat extends HTMLElement {
         let data = await getData(userId, clientId);
         if (!data) return
         this.databaseMessages.set(clientId, data)
+        for (let message of data)
+            this.storeMessage(clientId, message)
+        // console.log(this.clientsMessages)
     }
 
     handleMemberClick(event) {
@@ -501,60 +509,17 @@ export class chat extends HTMLElement {
         this.activeMemberId = event.detail.id
         this.activeMemberUsername = event.detail.username;
 
+        // console.debug(`active member : ${this.activeMemberUsername}`)
         // display user heeader
         this.displayConvoHeader(event)
         // load member conversation
-        this.renderActiveUserMessages(this.activeMemberId)
+        this.renderActiveUserMessages()
         
         // /// load the profile info
         this.displayClientProfile(event)
       
         // close overlay
         this.handleOverlayClick();
-    }
-
-    loadOldMessages(messages, userId, clientId) {
-        if (!messages || messages.length == 0) return 
-    
-        const conversation = this.shadowRoot.querySelector('#chat-conversation');
-        if (!conversation) return 
-        
-
-        if (messages[0].sender != clientId && messages[0].recipient != clientId)
-        {
-            console.log("user id ", userId, "client ", clientId)
-            console.log(messages[0])
-            return 
-        }
-        messages.forEach(message => {
-            if (message.sender == clientId) {
-                const clientMessageComponent = document.createElement('wc-client-message')
-                clientMessageComponent.setMessage(message.content, formatTime(message.time))
-                conversation.appendChild(clientMessageComponent)
-                if (message.status != "seen" && message.status != "sn")
-                    this.markeAsRead(message)
-            }
-            else {
-                const wpUserComponent = document.createElement('wc-user-message');
-                wpUserComponent.addMessage(message.content, formatTime(message.time), message.status);
-                conversation.appendChild(wpUserComponent);
-            }
-    
-        })
-    }
-
-    renderOldMessages(messages) {
-        const chatConversation = this.shadowRoot.querySelector("#convo-messages-container")
-        const messagesBody = chatConversation.querySelector('#chat-conversation');
-        messagesBody.innerHTML = ``
-        
-        const membersContainer = this.shadowRoot.querySelector('.members-container');
-        // const targetMember = membersContainer.querySelector(`wc-chat-member[id="${id}"]`)
-
-        this.loadOldMessages(messages, this.userId, this.activeMemberId)
-        messagesBody.appendChild(chatConvoComponent)
-
-        this.updateScroll()
     }
 
     handleSearch(event)  {
@@ -643,9 +608,16 @@ export class chat extends HTMLElement {
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         const memberElement = membersContainer.querySelector(`wc-chat-member[id="${message.clt}"]`);
 
+
         if (message.m == "typ"){
+            clearTimeout(typingTime)
             memberElement.displayIsTyping()
             this.displayUserIsTyping(message.clt)
+            
+            typingTime = setTimeout(() => {
+                memberElement.stopIsTyping()
+                this.hideIsTyping(message.clt)
+            }, doneTypingInterval)
         }
         else {
             memberElement.stopIsTyping()
@@ -665,8 +637,8 @@ export class chat extends HTMLElement {
     }
 
     handleIncomingMessage(message) {        
-        this.storeMessage(this.activeMemberId, message, "client")
-        console.log("new message recieved  ::", message)
+        this.storeMessage(message.clt, message, "client")
+        console.warn(`new message recieved  :  ${JSON.stringify(message)}`)
 
         message["time"] =  getCurrentTime()
         this.markeAsRecieved(message)
@@ -708,12 +680,20 @@ export class chat extends HTMLElement {
         websocket.send(JSON.stringify(response));
     }
 
-    storeMessage(key, value, type) {
+    storeMessage(key, message, type=null) {
+        let msgType = "user"
+        if (message.sender == key)
+        msgType = "client"
         if (!this.clientsMessages.has(key)) {
             this.clientsMessages.set(key, []);
         }
-        value["type"] = type
-        this.clientsMessages.get(key).push(value);
+        if (!type)
+            message["type"] = msgType
+        else
+            message["type"] = type
+        if (!message.cnt)
+            message["cnt"] = message.content
+        this.clientsMessages.get(key).push(message);
     }
     
     updateUnreadMessages(recipient, message) {
@@ -752,22 +732,41 @@ export class chat extends HTMLElement {
     }
 
     handleMessageStatus(message) {
-        
-        console.log("updating message status : ", message)
+        console.log("updating msg status :: ", message)
+
         const userId = message.clt
         const activeMemberMessages = this.getMessagesById(userId)
-        if (!activeMemberMessages) return 
+        if (!activeMemberMessages) {
+            console.warn(`no messages found for user : ${userId}`)
+            return
+        }
 
-        let messageToUpdate = activeMemberMessages.find(msg => msg.identifier == message.identifier)
-        if (!messageToUpdate)
-            messageToUpdate = activeMemberMessages.find(msg => msg.msg == message.msg)
-        if (!messageToUpdate) return
+        let messageToUpdate = activeMemberMessages.find(msg => msg.msg == message.msg)
+        if (!messageToUpdate) {
+            // console.warn(`couldn't find message  by id : ${JSON.stringify(message)}`)
+            messageToUpdate = activeMemberMessages.find(msg => msg.identifier == message.identifier)
+        }
+        if (!messageToUpdate) {
+            console.warn(`couldn't find the target message to update : ${JSON.stringify(message)} `)
+            return
+        }
         
         messageToUpdate["status"] = message.m
         messageToUpdate["msg"] = message.msg
+        
+        const recipient = this.convo_list_users.find(user => user.id == message.clt)
+        if (!recipient) {
+            console.warn(`couldn't find the target user for this message : ${JSON.stringify(message)} `)
+            return
+        }
 
         if (message.clt == this.activeMemberId)
-            this.renderActiveUserMessages(userId)
+            this.renderActiveUserMessages()
+        else {
+            const usersContainer = this.shadowRoot.querySelector('.members-container');
+            const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
+            recipientComponent.updateLastMessage(messageToUpdate, this.userId)
+        }
     }
 
     getUnreadMessagesCount(id) {
@@ -789,7 +788,7 @@ export class chat extends HTMLElement {
         return count;
     }
 
-    loadClientMessages(messages, activeMemberId) {
+    renderClientMessages(messages, activeMemberId) {
         if (!messages) return 
         
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
@@ -798,65 +797,53 @@ export class chat extends HTMLElement {
         messages.forEach(message => {
             if (message.type == "client") {
                 const wpClientComponent = document.createElement('wc-client-message')
-                wpClientComponent.setMessage(message.cnt, message.time)
+                wpClientComponent.setMessage(message.cnt, formatTime(message.time))
                 conversation.appendChild(wpClientComponent)
-               
+       
                 if (message.status != "seen" && message.status != "sn")
                     this.markeAsRead(message)
             }
             else {
                 const wpUserComponent = document.createElement('wc-user-message');
-                wpUserComponent.addMessage(message.cnt, message.time, message.status);
+                wpUserComponent.addMessage(message.cnt, formatTime(message.time), message.status);
                 conversation.appendChild(wpUserComponent);
             }
-
         });
     }
-    renderActiveUserMessages(id) {
+    renderActiveUserMessages() {
 
         const chatConversation = this.shadowRoot.querySelector("#convo-messages-container")
         const messagesBody = chatConversation.querySelector('#chat-conversation');
         messagesBody.innerHTML = ``
         
-        let targetMemberMessages = this.getMessagesById(id)
+        let targetMemberMessages = this.getMessagesById(this.activeMemberId)
+        if (!targetMemberMessages || targetMemberMessages.length == 0) {
+            console.warn(`no conversation messages found for user : ${this.activeMemberId}`)
+            return 
+        }
+
+        console.debug(`rendring  conversation for user : ${this.username} with ${this.activeMemberUsername}`)
 
         const membersContainer = this.shadowRoot.querySelector('.members-container');
-        const targetMember = membersContainer.querySelector(`wc-chat-member[id="${id}"]`)
-        
-        const databaseMessages = this.databaseMessages.get(this.activeMemberId)
-        
-        if (targetMember != this.activeMember) {
-            // targetMember.displayMessageCounter(1)
-            return            
+        const targetMember = membersContainer.querySelector(`wc-chat-member[id="${this.activeMemberId}"]`)
+        if (!targetMember) {
+            console.warn(`target member Element not found : ${this.username}`)
+            return 
         }
 
-        this.loadOldMessages(databaseMessages, this.userId, this.activeMemberId)
+        targetMember.hideMessageCounter()
 
-
-        if (targetMember)
-            targetMember.hideMessageCounter()
-        
-        if (databaseMessages) {
-            const lastMessage = databaseMessages[databaseMessages.length - 1]
-            // console.log("last message :: ", lastMessage)
-            if (targetMember)
-                targetMember.updateLastMessage(lastMessage, this.userId)
-        }
-        if (targetMemberMessages) {
-            const lastMessage = targetMemberMessages[targetMemberMessages.length - 1]
-            this.loadClientMessages(targetMemberMessages, id)
-            // console.log("last message :: ", lastMessage)
-            if (targetMember)
-                targetMember.updateLastMessage(lastMessage, this.userId)
-        }
+        const lastMessage = targetMemberMessages[targetMemberMessages.length - 1]
+        this.renderClientMessages(targetMemberMessages, this.activeMemberId)
+        targetMember.updateLastMessage(lastMessage, this.userId)
         this.updateScroll()
     }
 
     displayUserMessage(message) {
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
 
+        console.log(message)        
         const UserMessageComponent = document.createElement('wc-user-message');
-        
         UserMessageComponent.addMessage(message.cnt, message.time, message.status);
         UserMessageComponent.setAttribute("message-id",  message.identifier);
         
@@ -882,16 +869,18 @@ export class chat extends HTMLElement {
                 "time": getCurrentTime()
             }
             websocket.send(JSON.stringify(response));
-
+            this.displayUserMessage(response)
             this.storeMessage(this.activeMemberId, response, "user")
             this.updateScroll();
         }
     }
 
-
     handleMessageSendbtn(event) {
         const sendBtnIcon = this.shadowRoot.querySelector('#send-btn-icon');
-        
+        if (!sendBtnIcon) {
+            console.warn("send btn not found : #send-btn-icon ")
+            return 
+        }
         clearTimeout(typingTimer);
 
         const message = event.target.value;
@@ -1018,52 +1007,32 @@ export class chat extends HTMLElement {
 
     async updateUnreadMemberMessages() {
         const membersContainer = this.shadowRoot.querySelector('.members-container');
-        for (let user of this.convo_list_users) {
-            if (!this.databaseMessages.has(user.id)){
-                
-                await this.fetchData(this.userId, user.id)
-
-                const member =  membersContainer.querySelector(`wc-chat-member[username="${user.userName}"]`);
-                const messages = this.databaseMessages.get(user.id)
-                if (messages) {
-                    // console.log("last msg :: ", messages)
-                    member.displayMessageCounter(this.getUnreadMessagesCount(user.id), messages.at(-1))
-                    member.updateLastMessage(messages.at(-1), this.userId)
-                }
+       
+        await Promise.all(this.convo_list_users.map(async (user) => {
+            if (!user.id || !user.userName) {
+                console.warn(`invalid user data : ${JSON.stringify(user)}`)
+                return
             }
-        }
+            if (!this.databaseMessages.has(user.id)) {
+                await this.fetchData(this.userId, user.id)
+                
+                const member =  membersContainer.querySelector(`wc-chat-member[username="${user.userName}"]`);
+                if (!member) {
+                    console.warn(`member element not found for user : ${JSON.stringify(user)}`)
+                    return 
+                }
+
+                const messages = this.databaseMessages.get(user.id)
+                if (!messages || messages.length == 0) {
+                    console.warn(`no messages data found for user : ${JSON.stringify(user)}`)
+                    return 
+                }
+
+                const unreadMessagesCount = this.getUnreadMessagesCount(user.id)
+                const lastMessage = messages.at(-1)
+                member.displayMessageCounter(unreadMessagesCount, lastMessage)
+                member.updateLastMessage(lastMessage, this.userId)
+            }
+        }))
     }
 }
-
-
-
-
-    /**
-     
-    id  = setTimeout(<outer>() => {
-        fn()
-        if (is_typing)
-            id = setTimeout(outer)
-    }, 1000)
-
-    t0 = Date.now()
-    input.oninput = () => {
-        
-        if (!is_typing) {
-            is_typing = true
-            id  = setTimeout(<outer>() => {
-                fn()
-                if (is_typing)
-                    id = setTimeout(outer)
-            })
-        }
-
-        clearTimeout(tid)
-        tid = setTimout(() => {
-            is_typing = false
-        }, 1000)
-
-
-    }
-
-     */
