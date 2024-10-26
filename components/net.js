@@ -7,6 +7,15 @@ export function sendMessage(message) {
 }
 
 
+export   function  replaceChar(str, oldChar, newChar) {
+    if (typeof str !== 'string') {
+      console.error('Error: str must be a string');
+      return;
+    }
+  
+    return str.replace(new RegExp(oldChar, 'g'), newChar);
+}
+
 export async function getData(user1, user2) {
 	const url = `http://127.0.0.1:8000/messages/?user1=${user1}&user2=${user2}`;
 	try {

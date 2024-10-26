@@ -203,11 +203,10 @@ export class conversation extends HTMLElement {
 /*
 
 
-{ "m": "msg", "clt": 3, "tp": "txt", "identifier": 31, "cnt": "helllo" }
+{ "m": "msg", "clt": 2, "tp": "txt", "identifier": 31, "cnt": "helllo" }
 { "m": "recv", "clt": 3, "msg": 951, "identifier": 0 }
 
 
 jawad session id == 4
-csrftoken=e60We5UesWzVSdjQC5W4Hu84xeIZatDW; sessionid=01ul4w4h79xwvkmkcv2ysm3uxfids7xe
-sessionid=75r0w7kvo1v7o9rcr69ez3mk9ue4fkck
+sessionid=0rdqu65ds3eyebf32w305ax1zv0pfo0j
 */

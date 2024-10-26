@@ -171,7 +171,6 @@ export class chatMember extends HTMLElement {
     updateLastMessage(message, userId) {
         if (!message) return
 
-        // console.log("update last msg ::", message)
         let messageContent = message.cnt;
         if (!messageContent)
             messageContent = message.content
@@ -179,8 +178,8 @@ export class chatMember extends HTMLElement {
         this.lastMessage = message
 
         const msgIcon = this.shadowRoot.querySelector("#msg-icon")
-
-        if (message.type == "user" || message.sender == userId) {
+        
+        if (message.sender == userId) {
             msgIcon.style.display = "block"
             this.updateMessageStatus(message.status)
         }
@@ -188,6 +187,16 @@ export class chatMember extends HTMLElement {
             msgIcon.style.display = "none"
 
         const lastMessageTag = this.shadowRoot.querySelector("#msg-content");
+        if (message.type == "IMG" || message.tp == "IMG") {
+            lastMessageTag.textContent = "photo"
+            lastMessageTag.style["color"] = "#6c757d"
+            return
+        }
+        else if (message.type == "video") {
+            lastMessageTag.textContent = "video"
+            lastMessageTag.style["color"] = "#6c757d"
+            return
+        }
         let msg = messageContent
         if (messageContent.length > 20)
             msg  = messageContent.slice(0, 20) + "..."

@@ -1,11 +1,19 @@
 import { websocket } from "./net.js";
-import { getData, formatTime, getCurrentTime } from "./net.js"
+import { getData, formatTime, getCurrentTime, replaceChar } from "./net.js"
 
 let typingTimer;
 const doneTypingInterval = 2000;
 let typingTime;
 
 
+function isJsonString(str) {
+    try {
+      JSON.parse(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+}
 
 
 function getTimestamp(format = 'ms') {
@@ -24,9 +32,6 @@ function getTimestamp(format = 'ms') {
     
     return formats[format] || formats.ms;
 }
-
-
-
 
 const template = document.createElement('template');
 
@@ -262,7 +267,7 @@ template.innerHTML = /*html*/`
             color: #6c757d;
         }
 
-        .add-image-icon {
+        .add-file-icon {
             cursor: pointer;
             width: 25px;
             height: 25px;
@@ -278,7 +283,16 @@ template.innerHTML = /*html*/`
         #send-btn-icon.visible {
             display: block;
         }
-
+        .custom-file-upload {
+            background-color: blue;
+            border: 1px solid #ccc;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="file"] {
+            display: none;
+        }
 
     @media (max-width: 1200px) {
         #user-profile {
@@ -353,9 +367,14 @@ template.innerHTML = /*html*/`
                 <div id="chat-conversation" class="p-3"> </div>
                 
                 <div id="input-message-container">
-                    <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                        <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z" fill="#022f40"/>
-                    </svg>
+                    <div class="input_container">
+                        <label for="files" class="btn">
+                            <svg class="add-file-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
+                                <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z" />
+                            </svg>
+                        </label>
+                        <input id="files" style="display:none;" type="file">
+                    </div>
                     <input id="message-input" type="text" placeholder="Type a message">
                     <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512">
                         <path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z" fill="#0000FF"/>
@@ -403,7 +422,7 @@ export class chat extends HTMLElement {
         this.convo_list_users = [
         {
             "userName": "jawad",
-            "id": "4"
+            "id": "2"
         }, 
         {
             "userName": "khalid",
@@ -420,7 +439,7 @@ export class chat extends HTMLElement {
         this.isSend = false
 
         this.username = "outman"
-        this.userId = 3
+        this.userId = 1
 
         websocket.onmessage = (e) => {
             const message = JSON.parse(e.data);   
@@ -444,7 +463,18 @@ export class chat extends HTMLElement {
 
     updateScroll() {
         const element = this.shadowRoot.querySelector("#chat-conversation");
+
+        // Scroll to bottom immediately after adding content
         element.scrollTop = element.scrollHeight;
+        
+        // Use MutationObserver to scroll when new content is added
+        const observer = new MutationObserver(() => {
+            setTimeout(() => {
+                element.scrollTop = element.scrollHeight;
+            }, 0);
+        });
+        
+        observer.observe(element, { childList: true });
     }
 
     displayConvoHeader(event) {
@@ -550,7 +580,91 @@ export class chat extends HTMLElement {
 
         this.addMessageEventListener()
         this.addOffcanvasEventListener()
-        
+        this.uploadFilesEventListner()
+    }
+
+    async uploadFile(formData) {
+        console.log(formData)
+        try {
+            const response = await fetch('http://127.0.0.1:8000/upload/', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) throw new Error('Upload failed');
+            
+            const result = await response.json();
+            this.sendImageMessage(result)
+            
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    sendImageMessage(imageFiles) {
+        const message = {
+            "m": "msg",
+            "clt": this.activeMemberId,
+            "tp": "IMG",
+            "identifier": this.username + getTimestamp(),
+            "cnt": imageFiles,
+            "status": "pending",
+            "time": getCurrentTime()
+        }
+        websocket.send(JSON.stringify(message));
+        this.displayUserMessage(message)
+        message["sender"] = this.userId
+        message["recipient"] = this.activeMemberId
+        this.storeMessage(this.activeMemberId, message)
+    }
+
+    uploadFilesEventListner() {
+        this.shadowRoot.querySelector('.add-file-icon').addEventListener('click' , () =>{
+            const fileInput = this.shadowRoot.querySelector('#files')
+            fileInput.click()
+            
+            fileInput.addEventListener('change', (event) => {
+                const selectedFile = event.target.files[0]
+                
+                if (selectedFile) {
+                    const convo = this.shadowRoot.querySelector('#chat-conversation')
+                    const fileType = selectedFile.type
+                    if (fileType.startsWith('image/')) {
+                        const reader = new FileReader()
+
+                        reader.onload = (e) => {
+                            const imagePreview = document.createElement('img')
+                            imagePreview.src = e.target.result
+                        }
+                        reader.readAsDataURL(selectedFile);
+                        
+                        const formdata = new FormData()
+                        formdata.append('file', selectedFile)
+                        formdata.append('preview', selectedFile)
+                        this.uploadFile(formdata)
+                    }
+                    else if (fileType.startsWith('video/')) {
+                        console.log("processing video ...")
+                        const reader = new FileReader()
+                        
+                        reader.onload = (e) => {
+                            const wc = document.createElement('wc-user-video')
+                            wc.addMessage(e.target.result, "10:10 AM", "seen")
+                            convo.appendChild(wc)
+                        }
+                        reader.readAsDataURL(selectedFile);
+                        
+                        const formdata = new FormData()
+                        formdata.append('preview', selectedFile)
+                        formdata.append('file', selectedFile)
+                        this.uploadFile(formdata)
+                    }
+                }
+                fileInput.value = ""
+
+            })
+        })
+
     }
 
     addOffcanvasEventListener() {
@@ -631,16 +745,24 @@ export class chat extends HTMLElement {
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
         if (!conversation) return
 
-        const clientMessageComponent = document.createElement('wc-client-message')
-        clientMessageComponent.setMessage(message.cnt, message.time)
-        conversation.appendChild(clientMessageComponent)
+        if (message.tp == "TXT") {
+            const clientMessageComponent = document.createElement('wc-client-message')
+            clientMessageComponent.setMessage(message.cnt, message.time)
+            conversation.appendChild(clientMessageComponent)
+        }
+        else if (message.tp == "IMG"){
+            const clientMessageComponent = document.createElement('wc-client-image')
+            clientMessageComponent.addMessage(message.cnt, message.time)
+            conversation.appendChild(clientMessageComponent)
+        }
     }
 
     handleIncomingMessage(message) {        
-        this.storeMessage(message.clt, message, "client")
-        console.warn(`new message recieved  :  ${JSON.stringify(message)}`)
-
+        message["sender"] = message.clt
+        message["recipient"] = this.userId
         message["time"] =  getCurrentTime()
+        this.storeMessage(message.clt, message)
+        console.warn(`new message recieved  :  ${JSON.stringify(message)}`)
         this.markeAsRecieved(message)
 
         const usersContainer = this.shadowRoot.querySelector('.members-container');
@@ -680,24 +802,15 @@ export class chat extends HTMLElement {
         websocket.send(JSON.stringify(response));
     }
 
-    storeMessage(key, message, type=null) {
-        let msgType = "user"
-        if (message.sender == key)
-        msgType = "client"
+    storeMessage(key, message) {
         if (!this.clientsMessages.has(key)) {
             this.clientsMessages.set(key, []);
         }
-        if (!type)
-            message["type"] = msgType
-        else
-            message["type"] = type
-        if (!message.cnt)
-            message["cnt"] = message.content
         this.clientsMessages.get(key).push(message);
     }
     
     updateUnreadMessages(recipient, message) {
-        this.storeMessage(recipient.id , message, "client")
+        this.storeMessage(recipient.id , message)
 
         const usersContainer = this.shadowRoot.querySelector('.members-container');
         const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
@@ -732,6 +845,7 @@ export class chat extends HTMLElement {
     }
 
     handleMessageStatus(message) {
+        // console.log("update message :: ", message)
         const userId = message.clt
         const activeMemberMessages = this.getMessagesById(userId)
         if (!activeMemberMessages) {
@@ -748,6 +862,8 @@ export class chat extends HTMLElement {
             console.warn(`couldn't find the target message to update : ${JSON.stringify(message)} `)
             return
         }
+
+        // console.log("message to update :: ", messageToUpdate)
         
         messageToUpdate["status"] = message.m
         messageToUpdate["msg"] = message.msg
@@ -760,12 +876,24 @@ export class chat extends HTMLElement {
 
         if (message.clt == this.activeMemberId) {
             const conversation = this.shadowRoot.querySelector("#chat-conversation")
-            let messageComponent = conversation.querySelector(`wc-user-message[message-id="${message.identifier}"]`)
-            if (!messageComponent)
-                messageComponent = conversation.querySelector(`wc-user-message[message-id="${message.msg}"]`)
-            if (messageComponent) {
-                messageComponent.remove()
-                this.displayUserMessage(messageToUpdate)
+            if (messageToUpdate.tp == "TXT") {
+                let messageComponent = conversation.querySelector(`wc-user-message[message-id="${message.identifier}"]`)
+                if (!messageComponent)
+                    messageComponent = conversation.querySelector(`wc-user-message[message-id="${message.msg}"]`)
+                if (messageComponent) {
+                    messageComponent.remove()
+                    this.displayUserMessage(messageToUpdate)
+                }
+            }
+            else if (messageToUpdate.tp == "IMG") {
+                let messageComponent = conversation.querySelector(`wc-user-image[message-id="${message.identifier}"]`)
+                if (!messageComponent)
+                    messageComponent = conversation.querySelector(`wc-user-image[message-id="${message.msg}"]`)
+                if (messageComponent) {
+                    console.log("msg to update :: ", messageToUpdate)
+                    messageComponent.remove()
+                    this.displayUserMessage(messageToUpdate)
+                }
             }
         }
         else {
@@ -773,10 +901,10 @@ export class chat extends HTMLElement {
             const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
             recipientComponent.updateLastMessage(messageToUpdate, this.userId)
         }
+        this.updateScroll()
     }
 
     getUnreadMessagesCount(id) {
-        // console.log(this.databaseMessages)
         const array = this.databaseMessages.get(id)
         if (!array) return 0
         let count = 0
@@ -784,8 +912,9 @@ export class chat extends HTMLElement {
         for (let i = array.length - 1; i >= 0; --i) {
             const item = array[i]
             if (item.sender == id) {
-                if (item.status == "seen" || item.status == "sn")
+                if (item.status == "seen" || item.status == "sn" || item.status == "SN") {
                     return count
+                }
                 count++;
             }
             else
@@ -794,6 +923,45 @@ export class chat extends HTMLElement {
         return count;
     }
 
+    renderTextMessage(message) {
+        const conversation = this.shadowRoot.querySelector('#chat-conversation');
+        if (!conversation) return 
+        if (message.sender == this.activeMemberId) {
+            const clientMessageComponent = document.createElement('wc-client-message')
+            clientMessageComponent.setMessage(message.cnt, formatTime(message.time))
+            conversation.appendChild(clientMessageComponent)
+            if (message.status != "seen" && message.status != "sn")
+                this.markeAsRead(message)
+        }
+        else {
+            const wpUserComponent = document.createElement('wc-user-message');
+            wpUserComponent.addMessage(message.cnt, formatTime(message.time), message.status);
+            conversation.appendChild(wpUserComponent);
+        }
+    }
+    
+    renderImageMessage(message) {
+        const conversation = this.shadowRoot.querySelector('#chat-conversation');
+        if (!conversation) return
+        
+        let imageFiLes = message.cnt
+        if (!imageFiLes.f)
+            imageFiLes = JSON.parse(replaceChar(message.cnt, "'", '"'))
+
+        if (message.sender == this.activeMemberId) {
+            const clientMessageComponent = document.createElement('wc-client-image')
+            clientMessageComponent.addMessage(imageFiLes, formatTime(message.time), message.status)
+            conversation.appendChild(clientMessageComponent)
+
+            if (message.status != "seen" && message.status != "sn")
+                this.markeAsRead(message)
+        }
+        else {
+            const clientMessageComponent = document.createElement('wc-user-image')
+            clientMessageComponent.addMessage(imageFiLes, formatTime(message.time), message.status)
+            conversation.appendChild(clientMessageComponent)
+        }
+    }
     renderClientMessages(messages, activeMemberId) {
         if (!messages) return 
         
@@ -801,21 +969,14 @@ export class chat extends HTMLElement {
         if (!conversation) return 
         
         messages.forEach(message => {
-            if (message.type == "client") {
-                const wpClientComponent = document.createElement('wc-client-message')
-                wpClientComponent.setMessage(message.cnt, formatTime(message.time))
-                conversation.appendChild(wpClientComponent)
-       
-                if (message.status != "seen" && message.status != "sn")
-                    this.markeAsRead(message)
-            }
-            else {
-                const wpUserComponent = document.createElement('wc-user-message');
-                wpUserComponent.addMessage(message.cnt, formatTime(message.time), message.status);
-                conversation.appendChild(wpUserComponent);
-            }
-        });
-    }
+            if (message.tp == "TXT") {
+                this.renderTextMessage(message)
+        }
+        else if (message.tp == "IMG") {
+            this.renderImageMessage(message)
+        }
+    });
+}
     renderActiveUserMessages() {
 
         const chatConversation = this.shadowRoot.querySelector("#convo-messages-container")
@@ -848,14 +1009,22 @@ export class chat extends HTMLElement {
     displayUserMessage(message) {
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
 
-        console.log(message)        
-        const UserMessageComponent = document.createElement('wc-user-message');
-        UserMessageComponent.addMessage(message.cnt, message.time, message.status);
-        UserMessageComponent.setAttribute("message-id",  message.identifier);
-        if (message.msg)
-            UserMessageComponent.setAttribute("message-id",  message.msg);
-        
-        conversation.appendChild(UserMessageComponent);
+        if (message.tp == "TXT") {
+            const UserMessageComponent = document.createElement('wc-user-message');
+            UserMessageComponent.addMessage(message.cnt, message.time, message.status);
+            UserMessageComponent.setAttribute("message-id",  message.identifier);
+            if (message.msg)
+                UserMessageComponent.setAttribute("message-id",  message.msg);
+            conversation.appendChild(UserMessageComponent);
+        }
+        else if (message.tp == "IMG") {
+            const UserMessageComponent = document.createElement('wc-user-image');
+            UserMessageComponent.addMessage(message.cnt, message.time, message.status);
+            UserMessageComponent.setAttribute("message-id",  message.identifier);
+            if (message.msg)
+                UserMessageComponent.setAttribute("message-id",  message.msg);
+            conversation.appendChild(UserMessageComponent);
+        }
     }
 
     sendMessage(event) {
@@ -870,7 +1039,7 @@ export class chat extends HTMLElement {
             const response = {
                 "m": "msg",
                 "clt": this.activeMemberId, // client id
-                "tp": "txt",
+                "tp": "TXT",
                 "identifier": this.username + this.identifier,
                 "cnt": message,
                 "status": "pending",
@@ -878,7 +1047,9 @@ export class chat extends HTMLElement {
             }
             websocket.send(JSON.stringify(response));
             this.displayUserMessage(response)
-            this.storeMessage(this.activeMemberId, response, "user")
+            response["sender"] = this.userId
+            response["recipient"] = this.activeMemberId
+            this.storeMessage(this.activeMemberId, response)
             this.updateScroll();
         }
     }
@@ -1038,6 +1209,8 @@ export class chat extends HTMLElement {
 
                 const unreadMessagesCount = this.getUnreadMessagesCount(user.id)
                 const lastMessage = messages.at(-1)
+                console.log(unreadMessagesCount)
+
                 member.displayMessageCounter(unreadMessagesCount, lastMessage)
                 member.updateLastMessage(lastMessage, this.userId)
             }

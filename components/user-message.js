@@ -45,7 +45,7 @@ userMessageTemplate.innerHTML = /*html*/ `
             align-items: end;
             gap: 10px;
             background-color: red;
-            background-color: #dcf8c6;
+            background-color: #005c4b;
             border-radius: 7.5px;
             max-width: 80%;
             padding: 6px 7px 8px 9px;
@@ -63,11 +63,13 @@ userMessageTemplate.innerHTML = /*html*/ `
             border-bottom-right-radius: 2px;
 
         }
-
+        #user-msg {
+            color: white;
+        }
         .message-time {
             align-self: flex-end;
             font-size: 12px;
-            color: #888;
+            color: #cdd3d7;
             min-width: 50px;
         }
 		
@@ -93,28 +95,16 @@ export class userMessage extends HTMLElement {
 	}
 
     connectedCallback() {
-
     }  
 
     addMessage(message, time, status) {
-        
-        const user = this.getAttribute("user");
-        
         const userMessage = this.shadowRoot.querySelector('.user-msg');
         userMessage.textContent = message;
+        userMessage.style["color"] = "white"
         
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
         userMessageTime.textContent = time;
-
-        const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        if (!messageSts) return 
-        if (status == "sn" || status == "seen") 
-            messageSts.src = "assets/read.svg";
-        else if (status == "recv" || status =="recieved") 
-            messageSts.src = "assets/delivered.svg";
-        else if (status == "st" || status == "ST") 
-            messageSts.src = "assets/send-to-server.svg";
-        
+        this.updateMessageStatus(status)
         const userElement = this.shadowRoot.querySelector('.user-message');
         userElement.style.display = 'flex';
     }
