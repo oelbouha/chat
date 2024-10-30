@@ -1,4 +1,6 @@
 
+import {formatTime} from "./net.js"
+
 const userMessageTemplate = document.createElement('template');
 
 userMessageTemplate.innerHTML = /*html*/ `
@@ -41,12 +43,10 @@ userMessageTemplate.innerHTML = /*html*/ `
         }
 
         #msg-status-container {
-            gap: 4px;
+            position: absolute;
+            bottom: 1%;
+            right: 2.5%;
             display: flex;
-            flex-direction: row;
-            align-items: center;
-            box-sizing: border-box;
-            min-width: 70px;
         }
 
         .message-status-icon {
@@ -62,7 +62,6 @@ userMessageTemplate.innerHTML = /*html*/ `
             border-radius: 7.5px;
             padding: 3px 4px 3px 4px;
             box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
-            border-bottom-right-radius: 2px;
             cursor: pointer;
         }
 
@@ -73,7 +72,7 @@ userMessageTemplate.innerHTML = /*html*/ `
         .message-time {
             align-self: flex-end;
             font-size: 12px;
-            color: #888;
+            color: #fff;
             min-width: 50px;
         }
         #image-container {
@@ -119,18 +118,18 @@ userMessageTemplate.innerHTML = /*html*/ `
 
 	</style>
 	<div class="message user-message position-relative">
-        <div class="msg-container " >
+        <div class="msg-container position-relative" >
             <div class="image-container">
 				<img id="image-src" src="" />
 			</div>
             <div class="spinner-container">
                 <svg class="spinner"  xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g stroke="white"><circle cx="12" cy="12" r="9.5" fill="none" stroke-linecap="round" stroke-width="3"><animate attributeName="stroke-dasharray" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0 150;42 150;42 150;42 150"/><animate attributeName="stroke-dashoffset" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0;-16;-59;-59"/></circle><animateTransform attributeName="transform" dur="2s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></g></svg>
             </div>
-        </div>
-        <div id="msg-status-container" >
-            <div class="message-time"></div>
-            <div class="message-status">
-                <img class="message-status-icon" src="assets/not-send.svg" />
+            <div id="msg-status-container" >
+                <div class="message-time"></div>
+                <div class="message-status">
+                    <img class="message-status-icon" src="assets/not-send.svg" />
+                </div>
             </div>
         </div>
     </div>
@@ -155,6 +154,7 @@ export class imageMessage extends HTMLElement {
             "status": "",
             "time" : "",
             "type": "",
+            "msg_id": "",
             dimensions: {width: 0, height: 0}
         }
         this.setupEventListner()
@@ -162,7 +162,7 @@ export class imageMessage extends HTMLElement {
 
     connectedCallback() {
         const imageTag = this.shadowRoot.querySelector('#image-src');
-        // imageTag.addEventListener('load', this.handleImageLoad.bind(this))
+        imageTag.addEventListener('load', this.handleImageLoad.bind(this))
     }  
 
     setupEventListner() {
@@ -173,7 +173,7 @@ export class imageMessage extends HTMLElement {
 
         iamgeContainer.addEventListener('click', (e) => {
             modal.style.display = "flex"
-            image.src = "http://127.0.0.1:8000" + this.imagedata.file
+            image.src = `http://127.0.0.1:8000/message/${this.imagedata.msg_id}/full/`
         })
 
         const closeBtn = this.shadowRoot.querySelector("#close-btn")
@@ -185,6 +185,7 @@ export class imageMessage extends HTMLElement {
     handleImageLoad() {
         const imageContainer = this.shadowRoot.querySelector('.image-container')
         const imageTag = this.shadowRoot.querySelector('#image-src');
+        const spinnerContainer = this.shadowRoot.querySelector(".spinner-container")
 
         const naturalWidth = imageTag.naturalWidth;
         const naturalHeight = imageTag.naturalHeight;
@@ -200,23 +201,25 @@ export class imageMessage extends HTMLElement {
         imageTag.style.height = `${this.imagedata.dimensions.height}px`
 
         setTimeout(() => {
-            spinner.style.display = "none"
             imageTag.style.display = "block"
-        }, 300)
+            spinner.style.display = "none"
+            spinnerContainer.style.display = "none"
+        }, 100)
     }
 
-    addMessage(image, time, status, type="user") {
+    addMessage(image, message, type="user") {
         this.imagedata.file = image.f
         this.imagedata.prev_file = image.prev_f
-        this.imagedata.time = time
+        this.imagedata.time = formatTime(message.time)
         this.imagedata.type = type
-        this.imagedata.status = status
-        
+        this.imagedata.status = message.status
+        if (message.msg)
+            this.imagedata.msg_id = message.msg
         this.render()
     }
 
     calculateImageDimensions(naturalWidth, naturalHeight) {
-        const maxWidth = 350;
+        const maxWidth = 300;
         const maxHeight = 350;
         
         if (naturalWidth > maxWidth || naturalHeight > maxHeight) {
@@ -252,11 +255,9 @@ export class imageMessage extends HTMLElement {
         return "assets/not-send.svg"
     }
 
-    updateMessage(message=null, time=null, status=null) {
-        if (message) this.imagedata.file = message.f
-        if (message) this.imagedata.prev_file = message.prev_f
-        if (time) this.imagedata.time = time
-        if (status) this.imagedata.status = status
+    updateMessage(message) {
+        if (message.status) this.imagedata.status = message.status
+        if (message.msg) this.imagedata.msg_id = message.msg
         this.render()
     }
     
@@ -266,29 +267,8 @@ export class imageMessage extends HTMLElement {
         const userElement = this.shadowRoot.querySelector('.user-message');
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
         
-        if (this.imagedata.prev_file) {
-            const img = new Image()
-            img.src = "http://127.0.0.1:8000" + this.imagedata.prev_file
-            
-            img.onload = () => {
-                imageTag.src = "http://127.0.0.1:8000" + this.imagedata.prev_file
-                this.imagedata.dimensions = this.calculateImageDimensions(img.width, img.height)
-
-                const spinner = this.shadowRoot.querySelector('.spinner')
-                const spinnerContainer = this.shadowRoot.querySelector('.spinner-container')
-
-                spinnerContainer.style.width = `${this.imagedata.dimensions.width}px`
-                spinnerContainer.style.height = `${this.imagedata.dimensions.height}px`
-                
-                imageTag.style.width = `${this.imagedata.dimensions.width}px`
-                imageTag.style.height = `${this.imagedata.dimensions.height}px`
-                
-                setTimeout(() => {
-                    imageTag.style.display = "block"
-                    spinner.style.display = "none"
-                    spinnerContainer.style.display = "none"
-                }, 300)
-            }
+        if (this.imagedata.prev_file && this.imagedata.msg_id) {
+            imageTag.src = `http://127.0.0.1:8000/message/${this.imagedata.msg_id}/preview/`
         }
 
         if (this.imagedata.time) {

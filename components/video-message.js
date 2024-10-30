@@ -1,3 +1,5 @@
+import {formatTime} from "./net.js"
+
 const userMessageTemplate = document.createElement('template');
 
 userMessageTemplate.innerHTML = /*html*/ `
@@ -24,11 +26,10 @@ userMessageTemplate.innerHTML = /*html*/ `
         }
 
         #msg-status-container {
+            position: absolute;
+            bottom: 1%;
+            right: 2.5%;
             display: flex;
-            flex-direction: row;
-            align-items: center;
-            box-sizing: border-box;
-            min-width: 70px;
         }
 
 
@@ -38,7 +39,6 @@ userMessageTemplate.innerHTML = /*html*/ `
         }
 
         .user-video-container {
-            display: none;
             justify-content: center;
             align-items: center;
             overflow: hidden;
@@ -54,7 +54,7 @@ userMessageTemplate.innerHTML = /*html*/ `
         .msg-container {
             display: flex;
             flex-direction: column;
-            background-color: #022f40;
+            background-color: #005c4b;
             border-radius: 7.5px;
             padding: 3px 4px 3px 4px;
             box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
@@ -67,8 +67,9 @@ userMessageTemplate.innerHTML = /*html*/ `
         .message-time {
             align-self: flex-end;
             font-size: 12px;
-            color: #888;
+            color: #fff;
             min-width: 50px;
+            text-shadow: 0 0 5px rgba(9, 9, 9, 0.95);
         }
 		
         #video-play-icon {
@@ -84,7 +85,7 @@ userMessageTemplate.innerHTML = /*html*/ `
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #272727;
+            background-color: rgba(0, 0, 0, 0.59);
             border-radius: 50%;
             padding: 10px;
             cursor: pointer;
@@ -117,15 +118,30 @@ userMessageTemplate.innerHTML = /*html*/ `
             height: 50px;
         }
 
+        #video-tag {
+            max-width: 90dvw;
+            max-height: 90dvh;
+        }
+
+        #modal-container {
+            display: none;
+            position: fixed;
+            inset: 0; /* Shorthand for top: 0; right: 0; bottom: 0; left: 0; */
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #close-btn {
+            position: fixed;
+            top: 1%;
+            right: 1%;
+        }
+
 	</style>
     <div class="message user-message">
         <div class="msg-container">
-            <div class="user-video-container">
-                <video controls id="video-tag">
-                    <source id="video-src" src="" type="">
-                    browser does not support the video tag.
-                </video>
-            </div>
             <div id="video-preview" class="position-relative">
                 <div id="image-preview">
                     <img id="img-prev-src" src="" />
@@ -135,19 +151,28 @@ userMessageTemplate.innerHTML = /*html*/ `
                         <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01   1.233-.697l6.363   3.692a.802.802 0 0 1 0 1.393z"/>
                     </svg>
                 </div>
+                <div class="spinner-container">
+                    <svg class="spinner"  xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g stroke="white"><circle cx="12" cy="12" r="9.5" fill="none" stroke-linecap="round" stroke-width="3"><animate attributeName="stroke-dasharray" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0 150;42 150;42 150;42 150"/><animate attributeName="stroke-dashoffset" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0;-16;-59;-59"/></circle><animateTransform attributeName="transform" dur="2s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></g></svg>
+                </div>
+                <div id="msg-status-container">
+                    <div class="message-time"></div>
+                    <div class="message-status">
+                        <img class="message-status-icon" src="assets/not-send.svg" />
+                    </div>
+                </div>
             </div>
             
-            <div class="spinner-container">
-                <svg class="spinner"  xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g stroke="white"><circle cx="12" cy="12" r="9.5" fill="none" stroke-linecap="round" stroke-width="3"><animate attributeName="stroke-dasharray" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0 150;42 150;42 150;42 150"/><animate attributeName="stroke-dashoffset" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0;-16;-59;-59"/></circle><animateTransform attributeName="transform" dur="2s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></g></svg>
-            </div>
-        
         </div>
 
-        <div id="msg-status-container">
-            <div class="message-time"></div>
-            <div class="message-status">
-                <img class="message-status-icon" src="assets/not-send.svg" />
-            </div>
+    </div>
+
+    <div id="modal-container">
+        <div id="image-modal">
+            <button id="close-btn" type="button" class="btn-close btn-close-white" aria-label="Close"></button>
+            <video controls id="video-tag">
+                <source id="video-src" src="" type="">
+                browser does not support the video tag.
+            </video>
         </div>
     </div>
 `;
@@ -157,21 +182,53 @@ export class videoMessage extends HTMLElement {
 		super();
 		this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(userMessageTemplate.content.cloneNode(true));
+        this.setupEventListner()
 
         this.videoData = {
             "file": "",
             "prev_file": "",
             "status": "",
             "time" : "",
+            "msg_id": "",
             "type": "",
             dimensions: {width: 0, height: 0}
         }
+        this.hasRendred = false
 	}
 
-    connectedCallback() {
+    setupEventListner() {
         const videoPlayIcon = this.shadowRoot.querySelector("#video-play-icon")
-        videoPlayIcon.addEventListener('click', this.playVideo.bind(this))
+        const modal = this.shadowRoot.querySelector("#modal-container")
 
+        const videoTag = this.shadowRoot.querySelector("#video-src")
+        const videoContainer = this.shadowRoot.querySelector("#video-tag")
+        
+        videoPlayIcon.addEventListener('click', (e) => {
+            modal.style.display = "flex"
+            videoTag.src = `http://127.0.0.1:8000/message/${this.videoData.msg_id}/full/`
+            
+            videoContainer.style.display = "flex"
+            videoContainer.load()
+            
+            // Play the video after it's loaded
+            videoContainer.addEventListener('loadeddata', () => {
+                videoContainer.play()
+                .catch(error => {
+                    console.error("Error playing video:", error);
+                    videoContainer.controls = true; // Ensure controls are visible if autoplay fails
+                });
+            }, { once: true });
+        })
+        
+        const closeBtn = this.shadowRoot.querySelector("#close-btn")
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = "none"
+            videoContainer.pause();
+            videoContainer.currentTime = 0;
+        })
+    }
+
+    connectedCallback() {
         const imageTag = this.shadowRoot.querySelector("#img-prev-src")
         imageTag.addEventListener('load', this.handleImageLoad.bind(this))
     }  
@@ -184,7 +241,7 @@ export class videoMessage extends HTMLElement {
 
         const naturalWidth = imageTag.naturalWidth;
         const naturalHeight = imageTag.naturalHeight;
-        console.log("natural size ", naturalHeight, naturalWidth)
+        // console.log("natural size ", naturalHeight, naturalWidth)
 
         this.videoData.dimensions = this.calculateImageDimensions(naturalWidth, naturalHeight)
         const spinner = this.shadowRoot.querySelector(".spinner-container")
@@ -194,43 +251,13 @@ export class videoMessage extends HTMLElement {
         spinner.style.width = `${this.videoData.dimensions.width}px`
         spinner.style.height = `${this.videoData.dimensions.height}px`
         
-        console.log("image div :", imageTag, this.videoData.prev_file)
+        // console.log("image div :", imageTag, this.videoData.prev_file)
         
         setTimeout(() => {
             spinner.style.display = "none";
             iamgePreview.style.display = "block";
             playIconContainer.style.display = "block"
         }, 300)
-    }
-
-    playVideo(event) {
-        console.log("clciked ...")
-
-        const videoContainer = this.shadowRoot.querySelector(".user-video-container")
-        const video = this.shadowRoot.querySelector("#video-src")
-        const videoPreviewContainer = this.shadowRoot.querySelector("#video-preview")
-
-        const videoTag = this.shadowRoot.querySelector("#video-tag")
-
-
-        videoPreviewContainer.style.display = "none"
-        videoContainer.style.display = "flex"
-
-        video.src = "http://127.0.0.1:8000" + this.videoData.file
-        video.type = "video/mp4"
-
-        videoTag.style["width"] = `${this.videoData.dimensions.width}px`
-        videoTag.style["height"] = `${this.videoData.dimensions.height}px`
-        
-        videoTag.load()
-        // Play the video after it's loaded
-        videoTag.addEventListener('loadeddata', () => {
-            videoTag.play()
-                .catch(error => {
-                    console.error("Error playing video:", error);
-                    videoTag.controls = true; // Ensure controls are visible if autoplay fails
-                });
-        }, { once: true });
     }
 
     calculateImageDimensions(naturalWidth, naturalHeight) {
@@ -253,30 +280,33 @@ export class videoMessage extends HTMLElement {
             height: naturalHeight
         };
     }
-    getMessageStatusIcon(sts) {
-        const status = sts.toLowerCase()
-        if (['sn', 'seen'].includes(status)) return "assets/read.svg";
-        else if (['recv', 'recieved'].includes(status)) return "assets/delivered.svg";
-        else if (['st'].includes(status)) return "assets/send-to-server.svg";
+
+    getMessageStatusIcon(status) {
+        if (!status) return 
+        const iconStatus = status.toLowerCase()
+        if (['sn', 'seen'].includes(iconStatus)) return "assets/read.svg";
+        else if (['recv', 'recieved'].includes(iconStatus)) return "assets/delivered.svg";
+        else if (['st'].includes(iconStatus)) return "assets/send-to-server.svg";
         return "assets/not-send.svg"
     }
 
-    updateMessage(message=null, time=null, status=null) {
-        if (message) this.videoData.file = message.f
-        if (message) this.videoData.prev_file = message.prev_f
-        if (time) this.videoData.time = time
-        if (status) this.videoData.status = status
+    updateMessage(message) {
+        if (message.status) this.videoData.status = message.status
+        if (message.msg) this.videoData.msg_id = message.msg
+        
+        console.log(this.videoData)
         this.render()
     }
 
-    addMessage(video, time, status, type="user") {
+    addMessage(video, message, type="user") {
 
         this.videoData.file = video.f
         this.videoData.prev_file = video.prev_f
-        this.videoData.time = time
+        this.videoData.time = formatTime(message.time)
         this.videoData.type = type
-        this.videoData.status = status
-        
+        this.videoData.status = message.status
+        if (message.msg)
+            this.videoData.msg_id = message.msg
         this.render()
     }
     
@@ -284,11 +314,27 @@ export class videoMessage extends HTMLElement {
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
         userMessageTime.textContent = this.videoData.time;
 
-        const videoImagePreview = this.shadowRoot.querySelector("#img-prev-src")
-        videoImagePreview.src = "http://127.0.0.1:8000" + this.videoData.prev_file
+
+            const videoImagePreview = this.shadowRoot.querySelector("#img-prev-src")
+            if (this.videoData.prev_file && this.videoData.msg_id) {
+                console.log("adding image")
+
+                videoImagePreview.src = `http://127.0.0.1:8000/message/${this.videoData.msg_id}/preview/`
+                this.hasRendred = true
+            }
 
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        messageSts.src = this.getMessageStatusIcon(this.videoData.status)
+        if (messageSts) {
+            messageSts.src = this.getMessageStatusIcon(this.videoData.status)
+        }
+
+        if (this.videoData.type == "client") {
+            const msg = this.shadowRoot.querySelector('.user-message')
+            msg.style["align-items"] = "flex-start"
+            
+            this.shadowRoot.querySelector('.msg-container').style["background-color"] = " #022f40"
+            messageSts.style.display = "none"
+        }
     }
 
     static getAttribute() {

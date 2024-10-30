@@ -186,7 +186,7 @@ export class chatMember extends HTMLElement {
         lastMessageTag.style["color"] = "#6c757d"
         
         if (message.tp == "IMG")  return lastMessageTag.textContent = "photo"
-        if (message.type == "video") return lastMessageTag.textContent = "video"
+        if (message.tp == "VD") return lastMessageTag.textContent = "video"
         
         let msg = message.cnt
         if (message.cnt.length > 20) msg = msg.slice(0, 20) + "..."
