@@ -145,7 +145,7 @@ export class chatMember extends HTMLElement {
             lastMessageTag.textContent = ""
             return ;
         }
-        this.updateLastMessage(this.lastMessage, this.lastMessage.clt)
+        this.updateLastMessage(this.lastMessage)
     }
     
 	deactivate() {
@@ -168,40 +168,29 @@ export class chatMember extends HTMLElement {
         msgTime.textContent = formatTime(message.time, "24-hour")
     }
     
-    updateLastMessage(message, userId) {
+    updateLastMessage(message) {
         if (!message) return
-
-        let messageContent = message.cnt;
-        if (!messageContent)
-            messageContent = message.content
 
         this.lastMessage = message
 
-        const msgIcon = this.shadowRoot.querySelector("#msg-icon")
-        
-        if (message.sender == userId) {
-            msgIcon.style.display = "block"
-            this.updateMessageStatus(message.status)
+        const messageSts = this.shadowRoot.querySelector('.message-status-icon');
+        const messageStatusIcon = this.shadowRoot.querySelector("#msg-icon")
+        if (message.sender != this.memberId) {
+            messageStatusIcon.style.display = "block"
+            messageSts.src = this.getMessageStatusIcon(message.status)
         }
         else
-            msgIcon.style.display = "none"
+            messageStatusIcon.style.display = "none"
 
         const lastMessageTag = this.shadowRoot.querySelector("#msg-content");
-        if (message.type == "IMG" || message.tp == "IMG") {
-            lastMessageTag.textContent = "photo"
-            lastMessageTag.style["color"] = "#6c757d"
-            return
-        }
-        else if (message.type == "video") {
-            lastMessageTag.textContent = "video"
-            lastMessageTag.style["color"] = "#6c757d"
-            return
-        }
-        let msg = messageContent
-        if (messageContent.length > 20)
-            msg  = messageContent.slice(0, 20) + "..."
-        lastMessageTag.textContent = msg
         lastMessageTag.style["color"] = "#6c757d"
+        
+        if (message.tp == "IMG")  return lastMessageTag.textContent = "photo"
+        if (message.type == "video") return lastMessageTag.textContent = "video"
+        
+        let msg = message.cnt
+        if (message.cnt.length > 20) msg = msg.slice(0, 20) + "..."
+        lastMessageTag.textContent = msg
     }
 
     hideMessageCounter() {
@@ -238,8 +227,8 @@ export class chatMember extends HTMLElement {
 	}
 
 	connectedCallback() {
-
 		this.shadowRoot.querySelector('.member').addEventListener('click', this.handleClick.bind(this));
+        this.memberId = this.getAttribute("id")
 	}
 	
 	render() {
@@ -262,14 +251,12 @@ export class chatMember extends HTMLElement {
         `
     }
 
-    updateMessageStatus(status) {
-        const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        if (status == "sn" || status == "seen") 
-            messageSts.src = "assets/read.svg";
-        else if (status == "recv" || status =="recieved") 
-            messageSts.src = "assets/delivered.svg";
-        else if (status == "st" || status == "ST") 
-            messageSts.src = "assets/send-to-server.svg";
+    getMessageStatusIcon(sts) {
+        const status = sts.toLowerCase()
+        if (['sn', 'seen'].includes(status)) return "assets/read.svg";
+        else if (['recv', 'recieved'].includes(status)) return "assets/delivered.svg";
+        else if (['st'].includes(status)) return "assets/send-to-server.svg";
+        return "assets/not-send.svg"
     }
 
 	static get observedAttributes() {

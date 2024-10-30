@@ -1,15 +1,13 @@
 import { chat } from "./components/chat.js"
 import { chatMember } from "./components/chat-member.js"
-import { clientMessage } from "./components/client-message.js";
 import { conversation } from './components/conversation.js';
 import { profile } from './components/user-profile.js';
 import { card } from './components/user-card.js';
-import { userMessage } from './components/user-message.js';
+import { textMessage } from './components/text-message.js';
 import { websocket } from "./components/net.js";
 import { inviteModal } from "./components/inviteModal.js";
-import { userImage } from "./components/user-image.js";
-import { userVideo } from "./components/user-video.js";
-import { clientImage } from "./components/client-image.js"
+import { imageMessage } from "./components/image-message.js";
+import { videoMessage } from "./components/video-message.js";
 
 
 
@@ -19,11 +17,9 @@ customElements.define("wc-chat-member", chatMember);
 customElements.define("wc-chat-conversation", conversation);
 customElements.define("wc-chat-profile", profile);
 customElements.define("wc-card", card);
-customElements.define("wc-client-message", clientMessage);
-customElements.define("wc-user-message", userMessage);
-customElements.define("wc-user-image", userImage);
-customElements.define("wc-user-video", userVideo);
-customElements.define("wc-client-image", clientImage);
+customElements.define("wc-text-message", textMessage);
+customElements.define("wc-image-message", imageMessage);
+customElements.define("wc-video-message", videoMessage);
 
 
 

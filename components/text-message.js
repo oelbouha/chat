@@ -1,3 +1,6 @@
+
+import { getData, formatTime, getCurrentTime, replaceChar } from "./net.js"
+
 const userMessageTemplate = document.createElement('template');
 
 userMessageTemplate.innerHTML = /*html*/ `
@@ -87,36 +90,69 @@ userMessageTemplate.innerHTML = /*html*/ `
     </div>
 `;
 
-export class userMessage extends HTMLElement {
+export class textMessage extends HTMLElement {
 	constructor() {
 		super();
 		this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(userMessageTemplate.content.cloneNode(true));
+        this.messageData = {
+            "message": "",
+            "time": "",
+            "status": "",
+            "type": ""
+        }
 	}
 
     connectedCallback() {
-    }  
+    }
 
-    addMessage(message, time, status) {
-        const userMessage = this.shadowRoot.querySelector('.user-msg');
-        userMessage.textContent = message;
-        userMessage.style["color"] = "white"
-        
-        const userMessageTime = this.shadowRoot.querySelector('.message-time');
-        userMessageTime.textContent = time;
-        this.updateMessageStatus(status)
-        const userElement = this.shadowRoot.querySelector('.user-message');
-        userElement.style.display = 'flex';
+    addMessage(message, type="user") {
+        this.messageData.message = message.cnt
+        this.messageData.status = message.status
+        this.messageData.time = formatTime(message.time)
+        this.messageData.type = type
+        this.render()
     }
     
-    updateMessageStatus(status) {
+    getMessageStatusIcon() {
+        const status = this.messageData.status.toLowerCase()
+        if (['sn', 'seen'].includes(status)) return "assets/read.svg";
+        else if (['recv', 'recieved'].includes(status)) return "assets/delivered.svg";
+        else if (['st'].includes(status)) return "assets/send-to-server.svg";
+        return "assets/not-send.svg"
+    }
+
+    updateMessage(message=null, time=null, status=null) {
+        if (message) this.messageData.message = message
+        if (time) this.messageData.time = time
+        if (status) this.messageData.status = status
+        this.render()
+    }
+
+    render() {
+        const userMessage = this.shadowRoot.querySelector('.user-msg');
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        if (status == "sn" || status == "seen") 
-            messageSts.src = "assets/read.svg";
-        else if (status == "recv" || status =="recieved") 
-            messageSts.src = "assets/delivered.svg";
-        else if (status == "st" || status == "ST") 
-            messageSts.src = "assets/send-to-server.svg";
+        const userMessageTime = this.shadowRoot.querySelector('.message-time');
+        const userElement = this.shadowRoot.querySelector('.user-message');
+        
+        
+        userMessage.textContent = this.messageData.message;
+        userMessage.style["color"] = "white"
+        
+        userMessageTime.textContent = this.messageData.time;
+        
+        messageSts.src = this.getMessageStatusIcon()
+
+        userElement.style.display = 'flex';
+
+
+        if (this.messageData.type == "client") {
+            const msg = this.shadowRoot.querySelector('.user-message')
+            msg.style["align-items"] = "flex-start"
+            
+            this.shadowRoot.querySelector('.msg-container').style["background-color"] = " #022f40"
+            messageSts.style.display = "none"
+        }
     }
 
     static getAttribute() {
