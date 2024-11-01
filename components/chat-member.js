@@ -18,11 +18,11 @@ chatMemberTemplate.innerHTML = /*html*/ `
             alignitems: center;
             padding: 1em;
             cursor: pointer;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #b8adae;
             border-radius: 4px;
         }
         .member:hover, .member.active {
-            background-color: #022f40;
+            background-color: #2c373b;
             color: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -43,17 +43,19 @@ chatMemberTemplate.innerHTML = /*html*/ `
         }
 
         .user-name {
+            color : white;
             font-weight: bold;
         }
 
         #msg-content {
             font-size: 0.8em;
-            color: #6c757d;
+            color: rgb(138, 148, 157);
         }
         .last-message {
             display: flex;
             flex-direction: row;
             align-items: center;
+            color: rgb(155, 164, 172);
             gap: 4px;
         }
         #msg-icon {

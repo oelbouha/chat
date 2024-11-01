@@ -42,8 +42,8 @@ template.innerHTML = /*html*/`
     #convo-list {
         width: 400px;
         min-width: 300px;
-        background-color: #f8f9fa;
-        border-right: 1px solid #dee2e6;
+        background-color: #111b21;
+        border-right: 1px solid #b8adae;
         transition: width 0.3s ease;
     }
 
@@ -75,6 +75,10 @@ template.innerHTML = /*html*/`
 
     .search-container {
         position: relative;
+        color: white;
+        background-color: #202c33;
+        margin-bottom: 20px;
+        display: flex;
     }
 
     .search-icon {
@@ -93,8 +97,14 @@ template.innerHTML = /*html*/`
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     }
 
-    #convo-search, .form-control {
+    #convo-search {
+        color: white;
+        border-radius: 8px;
+        border: 1.5px solid #dee2e6;
+        padding: 10px;
+        background-color: #202c33;
         padding-left: 3rem;
+        width: 100%;
     }
 
     #user-header-container {
@@ -124,10 +134,10 @@ template.innerHTML = /*html*/`
     }
 
     #user-image {
-            width: 100%;
-            height: 100%;
+        width: 100%;
+        height: 100%;
 
-            object-fit: cover;
+        object-fit: cover;
     }
     .convo-username {
         font-weight: bold;
@@ -196,6 +206,18 @@ template.innerHTML = /*html*/`
         #profileOffcanvas, #list-offcanvas {
             overflow-y: auto;
         }
+
+        #chat-conversation {
+            width: 100%;
+            height: 100%;
+            background-color: #111b21;
+            overflow-y: auto;
+        }
+        #conversation-background {
+            object-fit: contain;
+            width: 100%;
+            height: 100%;
+        }
     
         .overlay {
             position: fixed;
@@ -219,15 +241,6 @@ template.innerHTML = /*html*/`
         #user-profile, #user-header-container{
             display: none;
         }
-
-        #chat-conversation {
-            width: 100%;
-            height: 100%;
-            background-color: #e0e0e0;
-            overflow-y: auto;
-        }
-
-
         #input-message-container {
             display: none;
             flex-direction: row;
@@ -242,7 +255,7 @@ template.innerHTML = /*html*/`
             flex-grow: 1;
             margin: 0 10px;
             border-radius: 8px;
-            border: 1.5px solid #dee2e6;;
+            border: 1.5px solid #dee2e6;
             background-color: none;
             padding: 0.5em;
         }
@@ -285,6 +298,10 @@ template.innerHTML = /*html*/`
             display: none;
         }
 
+        .chat-header {
+            color: white;
+        }
+
     @media (max-width: 1200px) {
         #user-profile {
             display: none !important    
@@ -322,7 +339,7 @@ template.innerHTML = /*html*/`
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <input type="search" id="convo-search" class="form-control mb-3" placeholder="Search">
+                    <input type="search" id="convo-search"  placeholder="Search">
                 </div>
                 <div class="members-container"></div>
             </div>
@@ -355,7 +372,9 @@ template.innerHTML = /*html*/`
                     </div>
                 </div>
 
-                <div id="chat-conversation" class="p-3"> </div>
+                <div id="chat-conversation" class="p-3">
+                    <img id="conversation-background" src="assets/conversation.png" />
+                </div>
                 
                 <div id="input-message-container">
                     <div class="input_container">
@@ -883,49 +902,40 @@ export class chat extends HTMLElement {
             console.warn(`couldn't find the target user for this message : ${JSON.stringify(message)} `)
             return
         }
-
         // console.log("msg to update :: ", messageToUpdate.recipient == this.activeMemberId)
 
-        if (messageToUpdate.recipient == this.activeMemberId) {
-            const conversation = this.shadowRoot.querySelector("#chat-conversation")
-            
+        if (messageToUpdate.recipient != this.activeMemberId) {
             const usersContainer = this.shadowRoot.querySelector('.members-container');
             const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
             recipientComponent.updateLastMessage(messageToUpdate)
-            
-            let messageComponent = null
-            if (messageToUpdate.tp == "TXT") {
-                let messageComponent = conversation.querySelector(`wc-text-message[message-id="${messageToUpdate.identifier}"]`)
-                if (!messageComponent)
-                    messageComponent = conversation.querySelector(`wc-text-message[message-id="${messageToUpdate.msg}"]`)
-                if (messageComponent) {
-                    messageComponent.updateMessage(messageToUpdate)
-                }
-            }
-            else if (messageToUpdate.tp == "IMG") {
-                let messageComponent = conversation.querySelector(`wc-image-message[message-id="${messageToUpdate.identifier}"]`)
-                if (!messageComponent) {
-                    messageComponent = conversation.querySelector(`wc-image-message[message-id="${messageToUpdate.msg}"]`)
-                }
-            if (messageComponent) {
-                messageComponent.updateMessage(messageToUpdate)
-            }
+            return // the conversation is not open so update last message and return
+        }
+       
+        const conversation = this.shadowRoot.querySelector("#chat-conversation")
+        const usersContainer = this.shadowRoot.querySelector('.members-container');
+        const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
+        recipientComponent.updateLastMessage(messageToUpdate)
+        
+        let messageComponent = null
+        let identifierAttribute = null
+        let idAttribute = null
+        if (messageToUpdate.tp == "TXT") {
+            identifierAttribute = `wc-text-message[message-id="${messageToUpdate.identifier}"]`
+            idAttribute = `wc-text-message[message-id="${messageToUpdate.msg}"]`
+        }
+        else if (messageToUpdate.tp == "IMG") {
+            identifierAttribute = `wc-image-message[message-id="${messageToUpdate.identifier}"]`
+            idAttribute = `wc-image-message[message-id="${messageToUpdate.msg}"]`
         }
         else if (messageToUpdate.tp == "VD") {
-            let messageComponent = conversation.querySelector(`wc-video-message[message-id="${messageToUpdate.identifier}"]`)
-            if (!messageComponent) {
-                messageComponent = conversation.querySelector(`wc-video-message[message-id="${messageToUpdate.msg}"]`)
-            }
-            if (messageComponent) {
-                messageComponent.updateMessage(messageToUpdate)
-            }
+            identifierAttribute = `wc-video-message[message-id="${messageToUpdate.identifier}"]`
+            idAttribute = `wc-video-message[message-id="${messageToUpdate.msg}"]`
         }
-}
-        else {
-            const usersContainer = this.shadowRoot.querySelector('.members-container');
-            const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
-            recipientComponent.updateLastMessage(messageToUpdate)
-        }
+        messageComponent = conversation.querySelector(`${identifierAttribute}`)
+        if (!messageComponent)
+            messageComponent = conversation.querySelector(`${idAttribute}`)
+        if (messageComponent)
+            messageComponent.updateMessage(messageToUpdate)
         this.updateScroll()
     }
 
@@ -1050,7 +1060,7 @@ export class chat extends HTMLElement {
         
         let targetMemberMessages = this.getMessagesById(this.activeMemberId)
         if (!targetMemberMessages || targetMemberMessages.length == 0) {
-            console.warn(`no conversation messages found for user : ${this.activeMemberId}`)
+            // console.warn(`no conversation messages found for user : ${this.activeMemberId}`)
             return 
         }
 

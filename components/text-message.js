@@ -20,6 +20,7 @@ userMessageTemplate.innerHTML = /*html*/ `
 
         #msg-status-container {
             display: flex;
+            align-self: flex-end;
             flex-direction: row;
             justify-content: end;
             gap: 2px;
@@ -34,9 +35,6 @@ userMessageTemplate.innerHTML = /*html*/ `
         .msg-container {
             display: flex;
             flex-direction: row;
-            justify-content: center;
-            align-items: end;
-            gap: 10px;
             background-color: red;
             background-color: #005c4b;
             border-radius: 7.5px;
@@ -48,7 +46,6 @@ userMessageTemplate.innerHTML = /*html*/ `
         .user-message {
             color: #fff;
             align-items: flex-end;
-            display: none;
         }
 
         .message-time {
@@ -77,7 +74,7 @@ export class textMessage extends HTMLElement {
 		this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(userMessageTemplate.content.cloneNode(true));
         this.messageData = {
-            "message": "",
+            "content": "",
             "time": "",
             "status": "",
             "type": ""
@@ -88,7 +85,7 @@ export class textMessage extends HTMLElement {
     }
 
     addMessage(message, type="user") {
-        this.messageData.message = message.cnt
+        this.messageData.content = message.cnt
         this.messageData.status = message.status
         this.messageData.time = formatTime(message.time)
         this.messageData.type = type
@@ -114,18 +111,15 @@ export class textMessage extends HTMLElement {
         const userMessage = this.shadowRoot.querySelector('.message-content');
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
-        const userElement = this.shadowRoot.querySelector('.user-message');
         
-        
-        userMessage.textContent = this.messageData.message;
-        userMessage.style["color"] = "white"
-        
+        if (this.messageData.content)
+        userMessage.textContent = this.messageData.content;
+    
+        if (this.messageData.time)
         userMessageTime.textContent = this.messageData.time;
-        
-        messageSts.src = this.getMessageStatusIcon()
-
-        userElement.style.display = 'flex';
-
+    
+        if (this.messageData.status)
+            messageSts.src = this.getMessageStatusIcon()
 
         if (this.messageData.type == "client") {
             const msg = this.shadowRoot.querySelector('.user-message')
@@ -138,7 +132,4 @@ export class textMessage extends HTMLElement {
         }
     }
 
-    static getAttribute() {
-        return ["user"];
-    }
 }

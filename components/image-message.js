@@ -34,14 +34,6 @@ userMessageTemplate.innerHTML = /*html*/ `
             right: 1%;
         }
 
-        .message-content {
-            max-width: 100%;
-            padding: 10px 15px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
         #msg-status-container {
             position: absolute;
             bottom: 1%;
