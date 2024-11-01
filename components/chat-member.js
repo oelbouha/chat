@@ -108,7 +108,7 @@ chatMemberTemplate.innerHTML = /*html*/ `
         </div>
         <div id="msg-counter">
             <div id="incoming-msg-time"></div>
-            <div id="counter">1</div>
+            <div id="counter"></div>
         </div>
     </div>
 `;

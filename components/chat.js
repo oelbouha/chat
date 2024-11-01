@@ -765,7 +765,7 @@ export class chat extends HTMLElement {
         }
         else if (message.tp == "VD") {
             const videoComponent = document.createElement('wc-video-message')
-            videoComponent.addMessage(message.cnt, message.time, message.status, "client")
+            videoComponent.addMessage(message.cnt, message, "client")
             conversation.appendChild(videoComponent)
         }
     }
@@ -859,8 +859,6 @@ export class chat extends HTMLElement {
     }
 
     handleMessageStatus(message) {
-        console.log(message)
-
         const userId = message.clt
         const activeMemberMessages = this.getMessagesById(userId)
         if (!activeMemberMessages) {
@@ -886,40 +884,43 @@ export class chat extends HTMLElement {
             return
         }
 
-        // console.log("msg to update :: ", messageToUpdate)
+        // console.log("msg to update :: ", messageToUpdate.recipient == this.activeMemberId)
 
-        if (messageToUpdate.clt == this.activeMemberId) {
+        if (messageToUpdate.recipient == this.activeMemberId) {
             const conversation = this.shadowRoot.querySelector("#chat-conversation")
             
             const usersContainer = this.shadowRoot.querySelector('.members-container');
             const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
             recipientComponent.updateLastMessage(messageToUpdate)
             
+            let messageComponent = null
             if (messageToUpdate.tp == "TXT") {
                 let messageComponent = conversation.querySelector(`wc-text-message[message-id="${messageToUpdate.identifier}"]`)
                 if (!messageComponent)
                     messageComponent = conversation.querySelector(`wc-text-message[message-id="${messageToUpdate.msg}"]`)
                 if (messageComponent) {
-                    messageComponent.updateMessage(messageToUpdate.message, messageToUpdate.time, message.m)
+                    messageComponent.updateMessage(messageToUpdate)
                 }
             }
             else if (messageToUpdate.tp == "IMG") {
                 let messageComponent = conversation.querySelector(`wc-image-message[message-id="${messageToUpdate.identifier}"]`)
-                if (!messageComponent)
+                if (!messageComponent) {
                     messageComponent = conversation.querySelector(`wc-image-message[message-id="${messageToUpdate.msg}"]`)
-                if (messageComponent) {
-                    messageComponent.updateMessage(messageToUpdate)
                 }
-            }
-            else if (messageToUpdate.tp == "VD") {
-                let messageComponent = conversation.querySelector(`wc-video-message[message-id="${messageToUpdate.identifier}"]`)
-                if (!messageComponent)
-                    messageComponent = conversation.querySelector(`wc-video-message[message-id="${messageToUpdate.msg}"]`)
-                if (messageComponent) {
-                    messageComponent.updateMessage(messageToUpdate)
-                }
+            if (messageComponent) {
+                messageComponent.updateMessage(messageToUpdate)
             }
         }
+        else if (messageToUpdate.tp == "VD") {
+            let messageComponent = conversation.querySelector(`wc-video-message[message-id="${messageToUpdate.identifier}"]`)
+            if (!messageComponent) {
+                messageComponent = conversation.querySelector(`wc-video-message[message-id="${messageToUpdate.msg}"]`)
+            }
+            if (messageComponent) {
+                messageComponent.updateMessage(messageToUpdate)
+            }
+        }
+}
         else {
             const usersContainer = this.shadowRoot.querySelector('.members-container');
             const recipientComponent = usersContainer.querySelector(`wc-chat-member[username="${recipient.userName}"]`);
@@ -959,6 +960,9 @@ export class chat extends HTMLElement {
         else {
             messageComponent.addMessage(message);
         }
+        messageComponent.setAttribute("message-id",  message.identifier);
+        if(message.msg)
+            messageComponent.setAttribute("message-id",  message.msg);
         conversation.appendChild(messageComponent)
     }
     
@@ -966,18 +970,22 @@ export class chat extends HTMLElement {
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
         if (!conversation) return
         
-        const imageComponent = document.createElement('wc-video-message')
+        const videoComponent = document.createElement('wc-video-message')
         let imageFiLes = message.cnt
         if (!imageFiLes.f)
             imageFiLes = JSON.parse(replaceChar(message.cnt, "'", '"'))
 
         if (message.sender == this.activeMemberId) {
-            imageComponent.addMessage(imageFiLes, message, "client")
+            videoComponent.addMessage(imageFiLes, message, "client")
         }
         else {
-            imageComponent.addMessage(imageFiLes, message)
+            videoComponent.addMessage(imageFiLes, message)
         }
-        conversation.appendChild(imageComponent)
+        videoComponent.setAttribute("message-id",  message.identifier);
+        if(message.msg)
+            videoComponent.setAttribute("message-id",  message.msg);
+
+        conversation.appendChild(videoComponent)
     }
     renderImageMessage(message) {
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
@@ -994,6 +1002,9 @@ export class chat extends HTMLElement {
         else {
             imageComponent.addMessage(imageFiLes, message)
         }
+        imageComponent.setAttribute("message-id",  message.identifier);
+        if(message.msg)
+            imageComponent.setAttribute("message-id",  message.msg);
         conversation.appendChild(imageComponent)
     }
 
@@ -1024,7 +1035,6 @@ export class chat extends HTMLElement {
                 this.renderImageMessage(message)
             }
             else if (message.tp == "VD") {
-                console.log(message)
                 this.renderVideoMessage(message)
             }
             if (message.sender == this.activeMemberId && !this.isMessageSeen(message.status)) {

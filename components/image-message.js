@@ -144,6 +144,7 @@ userMessageTemplate.innerHTML = /*html*/ `
 
 export class imageMessage extends HTMLElement {
 	constructor() {
+
 		super();
 		this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(userMessageTemplate.content.cloneNode(true));
@@ -158,6 +159,8 @@ export class imageMessage extends HTMLElement {
             dimensions: {width: 0, height: 0}
         }
         this.setupEventListner()
+
+        this.isImageLoaded = false
 	}
 
     connectedCallback() {
@@ -267,8 +270,9 @@ export class imageMessage extends HTMLElement {
         const userElement = this.shadowRoot.querySelector('.user-message');
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
         
-        if (this.imagedata.prev_file && this.imagedata.msg_id) {
+        if (this.imagedata.prev_file && this.imagedata.msg_id && !this.isImageLoaded) {
             imageTag.src = `http://127.0.0.1:8000/message/${this.imagedata.msg_id}/preview/`
+            this.isImageLoaded = true
         }
 
         if (this.imagedata.time) {

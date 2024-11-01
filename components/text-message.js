@@ -17,23 +17,13 @@ userMessageTemplate.innerHTML = /*html*/ `
             flex-direction: column;
             margin-bottom: 4px;
         }
-        
-        .message-content {
-            max-width: 100%;
-            padding: 10px 15px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
 
         #msg-status-container {
             display: flex;
             flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            gap: 5px;
-            min-width: 70px;
+            justify-content: end;
+            gap: 2px;
+            min-width: 80px;
         }
 
         .message-status-icon {
@@ -56,30 +46,21 @@ userMessageTemplate.innerHTML = /*html*/ `
         }
 
         .user-message {
+            color: #fff;
             align-items: flex-end;
             display: none;
         }
 
-        .user-message .message-content {
-            background-color: #f0c808;
-            color: #fff;
-            border-bottom-right-radius: 2px;
-
-        }
-        #user-msg {
-            color: white;
-        }
         .message-time {
             align-self: flex-end;
             font-size: 12px;
             color: #cdd3d7;
-            min-width: 50px;
         }
 		
 	</style>
 	<div class="message user-message">
         <div class="msg-container" >
-            <div class="user-msg"></div>
+            <div class="message-content"></div>
             <div id="msg-status-container" >
                 <div class="message-time"></div>
                 <div class="message-status">
@@ -122,15 +103,15 @@ export class textMessage extends HTMLElement {
         return "assets/not-send.svg"
     }
 
-    updateMessage(message=null, time=null, status=null) {
-        if (message) this.messageData.message = message
-        if (time) this.messageData.time = time
-        if (status) this.messageData.status = status
+    updateMessage(message) {
+        if (message && message.status) {
+            this.messageData.status = message.status
+        }
         this.render()
     }
 
     render() {
-        const userMessage = this.shadowRoot.querySelector('.user-msg');
+        const userMessage = this.shadowRoot.querySelector('.message-content');
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
         const userMessageTime = this.shadowRoot.querySelector('.message-time');
         const userElement = this.shadowRoot.querySelector('.user-message');
@@ -150,8 +131,10 @@ export class textMessage extends HTMLElement {
             const msg = this.shadowRoot.querySelector('.user-message')
             msg.style["align-items"] = "flex-start"
             
+            const messageStatusIcon = this.shadowRoot.querySelector(".message-status")
             this.shadowRoot.querySelector('.msg-container').style["background-color"] = " #022f40"
             messageSts.style.display = "none"
+            messageStatusIcon.style.display = "none"
         }
     }
 
