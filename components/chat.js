@@ -40,9 +40,8 @@ template.innerHTML = /*html*/`
     }
 
     #convo-list {
-        width: 400px;
-        min-width: 300px;
-        background-color: #111b21;
+        min-width: 400px;
+        background-color: #f8f9fa;
         border-right: 1px solid #b8adae;
         transition: width 0.3s ease;
     }
@@ -76,7 +75,6 @@ template.innerHTML = /*html*/`
     .search-container {
         position: relative;
         color: white;
-        background-color: #202c33;
         margin-bottom: 20px;
         display: flex;
     }
@@ -98,11 +96,11 @@ template.innerHTML = /*html*/`
     }
 
     #convo-search {
-        color: white;
+        color: #022f40;
         border-radius: 8px;
         border: 1.5px solid #dee2e6;
         padding: 10px;
-        background-color: #202c33;
+        background-color: #f8f9fa;
         padding-left: 3rem;
         width: 100%;
     }
@@ -210,7 +208,7 @@ template.innerHTML = /*html*/`
         #chat-conversation {
             width: 100%;
             height: 100%;
-            background-color: #111b21;
+            background-color: #e0e0e0;
             overflow-y: auto;
         }
         #conversation-background {
@@ -299,7 +297,7 @@ template.innerHTML = /*html*/`
         }
 
         .chat-header {
-            color: white;
+            color: #385a64;
         }
 
     @media (max-width: 1200px) {

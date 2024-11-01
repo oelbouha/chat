@@ -6,93 +6,91 @@ const chatMemberTemplate = document.createElement('template');
 chatMemberTemplate.innerHTML = /*html*/ `
 
     <style>
-        @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+    @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
 
-        :host {
-            display: block;
-            margin-bottom: 10px;
-        }
-        .member {
-            display: flex;
-            flex-direction: row;
-            alignitems: center;
-            padding: 1em;
-            cursor: pointer;
-            border-bottom: 1px solid #b8adae;
-            border-radius: 4px;
-        }
-        .member:hover, .member.active {
-            background-color: #2c373b;
-            color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    :host {
+        display: block;
+        margin-bottom: 10px;
+    }
+    .member {
+        display: flex;
+        flex-direction: row;
+        alignitems: center;
+        padding: 1em;
+        cursor: pointer;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 4px;
+    }
+    .member:hover, .member.active {
+        background-color: #022f40;
+        color: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-        .profile-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-right: 14px;
-            overflow: hidden;
-            object-fit: cover;
-        }
+    .profile-pic {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-right: 14px;
+        overflow: hidden;
+        object-fit: cover;
+    }
 
-        .user-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+    .user-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-        .user-name {
-            color : white;
-            font-weight: bold;
-        }
+    .user-name {
+        font-weight: bold;
+    }
 
-        #msg-content {
-            font-size: 0.8em;
-            color: rgb(138, 148, 157);
-        }
-        .last-message {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            color: rgb(155, 164, 172);
-            gap: 4px;
-        }
-        #msg-icon {
-            display: none;
-        }
-        
-        .message-status-icon {
-            width: 15px;
-            height: 15px;
-        }
-        #msg-counter {
-            display: none;
-            flex-direction: column;
-            margin-left: auto;
-            justify-content: center;
-            align-items: center;
-        }
+    #msg-content {
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+    .last-message {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+    }
+    #msg-icon {
+        display: none;
+    }
 
-        #incoming-msg-time {
-            color : #1D7512;
-            font-size: 13px;
-        }
+    .message-status-icon {
+        width: 15px;
+        height: 15px;
+    }
+    #msg-counter {
+        display: none;
+        flex-direction: column;
+        margin-left: auto;
+        justify-content: center;
+        align-items: center;
+    }
 
-        #counter {
-            display: flex;
-            width:  22px;
-            height: 22px;
-            border-radius: 50%;
-            background-color: #2aa81a;
-            justify-content: center;
-            align-items: center;
-            color: #022f40;
-            margin: 0;
-            padding: 0;
-            font-size: 11px;
-            font-weight: bold;
-        }
+    #incoming-msg-time {
+        color : #1D7512;
+        font-size: 13px;
+    }
+
+    #counter {
+        display: flex;
+        width:  22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: #2aa81a;
+        justify-content: center;
+        align-items: center;
+        color: #022f40;
+        margin: 0;
+        padding: 0;
+        font-size: 11px;
+        font-weight: bold;
+    }
     </style>
 
     <div class="member">
