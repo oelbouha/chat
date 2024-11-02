@@ -120,6 +120,13 @@ export class chatMember extends HTMLElement {
 		this.attachShadow({mode:'open'});
 		this.shadowRoot.appendChild(chatMemberTemplate.content.cloneNode(true));
         
+        this.userData = {
+            "userName": "",
+            "profilePic": "",
+            "lastMessage": "",
+            "unreadMessagesCount": "",
+            "id": "",
+        }
         this.messageCounter = 0
         this.lastMessage = null
 		this.isActive = false;
@@ -175,7 +182,7 @@ export class chatMember extends HTMLElement {
 
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');
         const messageStatusIcon = this.shadowRoot.querySelector("#msg-icon")
-        if (message.sender != this.memberId) {
+        if (message.sender != this.userData.id) {
             messageStatusIcon.style.display = "block"
             messageSts.src = this.getMessageStatusIcon(message.status)
         }
@@ -214,10 +221,9 @@ export class chatMember extends HTMLElement {
 	}
 
 	handleClick() {
-		const username = this.getAttribute('username');
-        const profilePic = this.getAttribute('profile-pic');
-        const id = this.getAttribute('id');
-
+		const username = this.userData.userName;
+        const profilePic = this.userData.profilePic;
+        const id = this.userData.id;
 
 		this.dispatchEvent(new CustomEvent('memberClicked', {
 			bubbles: true,
@@ -230,17 +236,24 @@ export class chatMember extends HTMLElement {
 		this.shadowRoot.querySelector('.member').addEventListener('click', this.handleClick.bind(this));
         this.memberId = this.getAttribute("id")
 	}
-	
+	addUserInfo(user) {
+        if (user) {
+            this.userData.userName = user.userName
+            this.userData.profilePic = user.profilePic
+            this.userData.id = user.id
+            this.userData.unreadMessagesCount = user.unreadMessagesCount
+        }
+        this.render()
+    }
 	render() {
-		const username = this.getAttribute('username' || 'Unknown User');
-		const profilePic = this.getAttribute('profile-pic');
-		const userLastMessage = this.getAttribute('last-message' || 'No message yet');
-
 		const userNameElement = this.shadowRoot.querySelector('.user-name');
 		const profilePicElement = this.shadowRoot.querySelector('.user-image');
 
-		userNameElement.textContent = username;
-		profilePicElement.src = profilePic;
+        if (this.userData.userName)
+		    userNameElement.textContent = this.userData.userName;
+		
+        if (this.userData.profilePic)
+            profilePicElement.src = this.userData.profilePic;
 
 		this.updateStyle();
 	}

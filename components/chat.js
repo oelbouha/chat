@@ -33,6 +33,7 @@ template.innerHTML = /*html*/`
     :host {
         display: block;
         height: 100%;
+        width: 100%;
     }
 
     .chat-container {
@@ -67,10 +68,6 @@ template.innerHTML = /*html*/`
         overflow-y: auto;
         max-height: calc(100vh - 120px);
     }
-
-	#user-profile .min {
-		display: none !important;
-	}
 
     .search-container {
         position: relative;
@@ -155,7 +152,7 @@ template.innerHTML = /*html*/`
         display: none;
     }
 
-
+    /* profile offcanvas */ 
         .profileOffcanvas {
             position: fixed;
             top: 0;
@@ -167,24 +164,8 @@ template.innerHTML = /*html*/`
             box-shadow: -2px 0 5px rgba(0,0,0,0.1);
         }
 
-        .list-offcanvas {
-            position: fixed;
-            top: 0;
-            left: -200%;
-            height: 100%;
-            width: 300px;
-            background-color: #fff;
-            transition: right 0.3s ease-in-out;
-            z-index: 1001;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-        }
-
         .profileOffcanvas.show {
             right: 0;
-        }
-
-        .list-offcanvas.show {
-            left: 0;
         }
 
         .profile-offcanvas-header {
@@ -192,16 +173,8 @@ template.innerHTML = /*html*/`
             border-bottom: 1px solid #dee2e6;
         }
 
-        .list-offcanvas-header {
-            padding: 1rem;
-            border-bottom: 1px solid #dee2e6;
-        }
 
-        .custom-offcanvas-body {
-
-        }
-
-        #profileOffcanvas, #list-offcanvas {
+        #profileOffcanvas {
             overflow-y: auto;
         }
 
@@ -224,7 +197,7 @@ template.innerHTML = /*html*/`
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+            z-index: 5;
             display: none;
         }
         
@@ -232,13 +205,12 @@ template.innerHTML = /*html*/`
             display: block;
         }
 
-        #list-offcanvas-body {
-        
-        }
-
         #user-profile, #user-header-container{
             display: none;
         }
+
+
+        /* input message */
         #input-message-container {
             display: none;
             flex-direction: row;
@@ -271,8 +243,6 @@ template.innerHTML = /*html*/`
 
         .add-file-icon {
             cursor: pointer;
-            width: 25px;
-            height: 25px;
         }
 
         #send-btn-icon {
@@ -299,10 +269,14 @@ template.innerHTML = /*html*/`
         .chat-header {
             color: #385a64;
         }
+        .return-icon-container {
+            display: none;
+        }
 
+    /* break points */
     @media (max-width: 1200px) {
         #user-profile {
-            display: none !important    
+            display: none !important;
 		}
         .profile-icon-container .profile-icon {
             display: initial !important;
@@ -311,9 +285,17 @@ template.innerHTML = /*html*/`
         }
     }
     
-    @media (max-width: 576px) {
+
+    @media (max-width: 800px) {
         #convo-list {
-            display: none !important;
+            position: fixed;
+            top: 0;
+            left: -200%;
+            height: 100%;
+            background-color: #fff;
+            transition: right 0.3s ease-in-out;
+            z-index: 20000;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
         }
         #min {
             width: 100px;
@@ -322,14 +304,26 @@ template.innerHTML = /*html*/`
         }
         #list-icon-container .list-icon, .profile-icon-container .profile-icon {
             display: initial !important;
-            width:  25px;
-            height: 25px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .return-icon-container {
+            display: initial !important;
+            position: fixed;
+            top : 2%;
+            left: 2%;
+            cursor: pointer;
+        }
+        .return-icon {
+            width:  20px;
+            height: 20px;
         }
     }
 </style>
 
 <body>
     <div class="chat-container position-relative">
+        
         <div class="d-flex h-100 position-relative">
         <div id="convo-list" class="p-3">
                 <h4 class="chat-header mb-3">Chats</h5>
@@ -347,13 +341,8 @@ template.innerHTML = /*html*/`
                     <div class="member">             
                         <div id="user-convo-header">
                             <div id="list-icon-container">
-                                <svg class="list-icon"   xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                                    <path d="M3.166,2.914c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
-                                    <path d="M8.745,6.099h13.255c.553,0,1-.448,1-1s-.447-1-1-1H8.745c-.553,0-1,.448-1,1s.447,1,1,1Z"/>
-                                    <path d="M3.166,9.815c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
-                                    <path d="M22,11H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
-                                    <path d="M3.166,16.716c-1.377,0-2.166,.796-2.166,2.185s.789,2.185,2.166,2.185,2.165-.796,2.165-2.185-.789-2.185-2.165-2.185Z"/>
-                                    <path d="M22,17.901H8.745c-.553,0-1,.448-1,1s.447,1,1,1h13.255c.553,0,1-.448,1-1s-.447-1-1-1Z"/>
+                                <svg class="list-icon" fill="#000000" width="25px" height="25px" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M228,128.00037a12.00028,12.00028,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12.00028,12.00028,0,0,1,228,128.00037Zm-188-52H216a12,12,0,0,0,0-24H40a12,12,0,1,0,0,24Zm176,104H40a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24Z"/>
                                 </svg>
                             </div>
                             <div class="profile-pic">
@@ -365,20 +354,28 @@ template.innerHTML = /*html*/`
                             </div>
                         </div>
                             <div class="profile-icon-container p-2">
-                                <img class="profile-icon" src="assets/portrait.svg" >
+                                <img class="profile-icon" src="assets/info.svg" >
                             </div>
                     </div>
                 </div>
 
                 <div id="chat-conversation" class="p-3">
+                    
                     <img id="conversation-background" src="assets/conversation.png" />
+                    <div class="return-icon-container">
+                        <svg class="return-icon" xmlns="http://www.w3.org/2000/svg" id="Bold" viewBox="0 0 24 24" width="512" height="512"><path d="M12,24a1.493,1.493,0,0,1-1.06-.439L3.264,15.889a5.5,5.5,0,0,1,0-7.778L10.936.439a1.5,1.5,0,1,1,2.121,2.122L5.385,10.232a2.5,2.5,0,0,0,0,3.536l7.672,7.671A1.5,1.5,0,0,1,12,24Z"/><path d="M21.542,24a1.5,1.5,0,0,1-1.061-.439L11.4,14.475a3.505,3.505,0,0,1,0-4.95L20.481.439A1.5,1.5,0,0,1,22.6,2.561l-9.086,9.085a.5.5,0,0,0,0,.708L22.6,21.439A1.5,1.5,0,0,1,21.542,24Z"/></svg>
+                    </div>
                 </div>
                 
                 <div id="input-message-container">
                     <div class="input_container">
                         <label for="files" class="btn">
-                            <svg class="add-file-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24">
-                                <path d="m16,7c0,1.105-.895,2-2,2s-2-.895-2-2,.895-2,2-2,2,.895,2,2Zm6.5,11h-1.5v-1.5c0-.828-.671-1.5-1.5-1.5s-1.5.672-1.5,1.5v1.5h-1.5c-.829,0-1.5.672-1.5,1.5s.671,1.5,1.5,1.5h1.5v1.5c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-1.5h1.5c.829,0,1.5-.672,1.5-1.5s-.671-1.5-1.5-1.5Zm-6.5-3l-4.923-4.923c-1.423-1.423-3.731-1.423-5.154,0l-2.923,2.923v-7.5c0-1.379,1.122-2.5,2.5-2.5h10c1.378,0,2.5,1.121,2.5,2.5v6c0,.828.671,1.5,1.5,1.5s1.5-.672,1.5-1.5v-6c0-3.032-2.467-5.5-5.5-5.5H5.5C2.467,0,0,2.468,0,5.5v10c0,3.032,2.467,5.5,5.5,5.5h6c.829,0,1.5-.672,1.5-1.5v-.5c0-1.657,1.343-3,3-3v-1Z" />
+                            <svg class="add-file-icon" width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 11C8.10457 11 9 10.1046 9 9C9 7.89543 8.10457 7 7 7C5.89543 7 5 7.89543 5 9C5 10.1046 5.89543 11 7 11Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5.56055 21C11.1305 11.1 15.7605 9.35991 21.0005 15.7899" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12.28 3H5C3.93913 3 2.92172 3.42136 2.17157 4.17151C1.42142 4.92165 1 5.93913 1 7V17C1 18.0609 1.42142 19.0782 2.17157 19.8284C2.92172 20.5785 3.93913 21 5 21H17C18.0609 21 19.0783 20.5785 19.8284 19.8284C20.5786 19.0782 21 18.0609 21 17V12" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M18.75 8.82996V0.829956" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M15.5508 4.02996L18.7508 0.829956L21.9508 4.02996" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </label>
                         <input id="files" style="display:none;" type="file">
@@ -400,22 +397,8 @@ template.innerHTML = /*html*/`
         </div>
         <div class="custom-offcanvas-body"></div>
     </div>
-
-    <div class="list-offcanvas" id="list-offcanvas">
-        <div class="list-offcanvas-header">
-            <button type="button" class="btn-close" id="listOffcanvasCloseBtn"></button>
-        </div>
-        <div id="list-offcanvas-body" class="p-3">
-            <div class="search-container">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <input type="search" id="offcanvas-search" class="form-control mb-3" placeholder="Search">
-            </div>
-        </div>
-    </div>
-
     <div class="overlay" id="overlay" ></div>
+
 </body>
 `;
 
@@ -430,11 +413,17 @@ export class chat extends HTMLElement {
         this.convo_list_users = [
         {
             "userName": "jawad",
-            "id": "2"
+            "id": "2",
+            "profilePic": "assets/after.png",
+            "unreadMessagesCount": "",
+            "lastMessage": ""
         }, 
         {
             "userName": "khalid",
-            "id": "10"
+            "id": "10",
+            "profilePic": "assets/after.png",
+            "unreadMessagesCount": "",
+            "lastMessage": ""
         }, 
         ];
 
@@ -449,6 +438,8 @@ export class chat extends HTMLElement {
         this.username = "outman"
         this.userId = 1
 
+        this.overlayActive = false
+        this.offcanvasActive = false
         websocket.onmessage = (e) => {
             const message = JSON.parse(e.data);   
             if (message.m == "msg")
@@ -516,10 +507,17 @@ export class chat extends HTMLElement {
             userProfile.style.display = 'block';
         userProfile.innerHTML = ``;
 
-        const wpProfile = document.createElement('wc-chat-profile');
-        wpProfile.setAttribute('username', this.activeMemberUsername);
-        wpProfile.setAttribute('profile-pic', profilePic);
-        userProfile.appendChild(wpProfile);
+
+        const profileComponent = document.createElement('wc-chat-profile');
+        const data = {
+            "name": this.activeMemberUsername,
+            "profilePic": profilePic,
+            "phoneNumber": "0639316995",
+            "description": "this is description ..."
+        }
+        profileComponent.addUserInfo(data)
+
+        userProfile.appendChild(profileComponent);
     }
 
     async fetchData(userId, clientId) {
@@ -562,7 +560,7 @@ export class chat extends HTMLElement {
         this.handleOverlayClick();
     }
 
-    handleSearch(event)  {
+    handleUserSearch(event)  {
         const searchQuery = event.target.value.toLowerCase();
         const membersContainer = this.shadowRoot.querySelector('.members-container');
         const members = membersContainer.querySelectorAll('wc-chat-member');
@@ -581,7 +579,7 @@ export class chat extends HTMLElement {
         this.shadowRoot.addEventListener('memberClicked', this.handleMemberClick.bind(this));
         
         const mainSearch = this.shadowRoot.querySelector('#convo-search');
-        mainSearch.addEventListener('input', this.handleSearch.bind(this));
+        mainSearch.addEventListener('input', this.handleUserSearch.bind(this));
 
         const profileIcon = this.shadowRoot.querySelector('.profile-icon');
         profileIcon.addEventListener('click', this.handleProfileOffCanvas.bind(this));
@@ -589,6 +587,20 @@ export class chat extends HTMLElement {
         this.addMessageEventListener()
         this.addOffcanvasEventListener()
         this.uploadFilesEventListner()
+
+
+        const returnIcon = this.shadowRoot.querySelector(".return-icon")
+        returnIcon.addEventListener('click', () => {
+            this.showMembersDivElement()
+        })
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 800 && this.overlayActive) {
+                this.hideOverlay()
+            }
+            else if (this.offcanvasActive)
+                this.showOverlay()
+        })
     }
 
     async uploadImageFile(file) {
@@ -694,19 +706,16 @@ export class chat extends HTMLElement {
 
     addOffcanvasEventListener() {
         const profileOffcanvasCloseBtn = this.shadowRoot.querySelector('#profileOffcanvasCloseBtn');
-        profileOffcanvasCloseBtn.addEventListener('click', this.handleProfileCloseOffcanvas.bind(this));
+        if (profileOffcanvasCloseBtn)
+            profileOffcanvasCloseBtn.addEventListener('click', this.handleProfileCloseOffcanvas.bind(this));
         
-        const listOffcanvas = this.shadowRoot.querySelector('#list-icon-container');
-        listOffcanvas.addEventListener('click', this.handleListOffcanvas.bind(this));
-    
-        const listOffCloseBtn = this.shadowRoot.querySelector('#listOffcanvasCloseBtn');
-        listOffCloseBtn.addEventListener('click', this.handlelistCloseOffcanvas.bind(this));
+        const listOffcanvas = this.shadowRoot.querySelector('.list-icon');
+        if (listOffcanvas)
+            listOffcanvas.addEventListener('click', this.showMembersDivElement.bind(this));
     
         const overlay = this.shadowRoot.querySelector('#overlay');
-        overlay.addEventListener('click', this.handleOverlayClick.bind(this));
-    
-        const offcanvasSearch = this.shadowRoot.querySelector('#offcanvas-search');
-        offcanvasSearch.addEventListener('input', this.handleOffcanvasSearch.bind(this));
+        if (overlay)
+            overlay.addEventListener('click', this.handleOverlayClick.bind(this));
 
     }
 
@@ -1173,24 +1182,12 @@ export class chat extends HTMLElement {
         }
     }
 
-    handleListOffcanvas(event) {
-        const listOffcanvasBody = this.shadowRoot.querySelector('#list-offcanvas-body');
-        
-        if (this.isActive == false)  {
-            this.convo_list_users.forEach(username => {
-                const memberElement = document.createElement('wc-chat-member');
-                memberElement.setAttribute('username', username.userName);
-                memberElement.setAttribute('profile-pic', `assets/after.png`);
-                memberElement.setAttribute('last-message', 'hello there!');
-                listOffcanvasBody.appendChild(memberElement);
-                this.isActive = true;
-            });
-        }
-
-            
-        const listOffcanvas = this.shadowRoot.querySelector('#list-offcanvas');
-        listOffcanvas.classList.add('show');
+    showMembersDivElement(event) {
+        const offcanvas = this.shadowRoot.querySelector("#convo-list");
+        offcanvas.style["left"] = "0";
         this.showOverlay();
+        this.overlayActive = true;
+        this.offcanvasActive = true;
     }
     
     handleOffcanvasSearch(event) {
@@ -1217,9 +1214,11 @@ export class chat extends HTMLElement {
         this.hideOverlay();
     }
 
-    handlelistCloseOffcanvas(event) {
-        const listOffcanvas = this.shadowRoot.querySelector('#list-offcanvas');
-        listOffcanvas.classList.remove('show');
+    hideMembersDivElement(event) {
+        const element = this.shadowRoot.querySelector('#convo-list');
+        element.style["left"] = "-200%"
+        this.overlayActive = false
+        this.offcanvasActive = false
         this.hideOverlay();
     }
 
@@ -1231,11 +1230,15 @@ export class chat extends HTMLElement {
         const cprofileOffcanvasBody = this.shadowRoot.querySelector('.custom-offcanvas-body');
         cprofileOffcanvasBody.innerHTML = ``;
 
-        const wpProfile = document.createElement('wc-chat-profile');
-        wpProfile.setAttribute('username', username);
-        wpProfile.setAttribute('profile-pic', profilePic);
-        
-        cprofileOffcanvasBody.appendChild(wpProfile);
+        const profileComponent = document.createElement('wc-chat-profile');
+        const data = {
+            "name": this.activeMemberUsername,
+            "profilePic": profilePic,
+            "phoneNumber": "0639316995",
+            "description": "this is description ..."
+        }
+        profileComponent.addUserInfo(data)
+        cprofileOffcanvasBody.appendChild(profileComponent)
 
         const profileOffcanvas = this.shadowRoot.querySelector('#profileOffcanvas');
         profileOffcanvas.classList.add('show');
@@ -1252,7 +1255,7 @@ export class chat extends HTMLElement {
     }
     handleOverlayClick() {
         this.handleProfileCloseOffcanvas();
-        this.handlelistCloseOffcanvas();
+        this.hideMembersDivElement();
     }
 
 
@@ -1263,17 +1266,21 @@ export class chat extends HTMLElement {
         const username = "mohamed";
         const profilePic = "assets/after.png";
         
-        this.convo_list_users.forEach(username => {   
+        this.convo_list_users.forEach(user => {   
             const memberElement = document.createElement('wc-chat-member');
-            memberElement.setAttribute('username', username.userName);
+            memberElement.setAttribute('username', user.userName);
             memberElement.setAttribute('profile-pic', `assets/after.png`);
-            memberElement.setAttribute('id', username.id);
+            memberElement.setAttribute('id', user.id);
+            setTimeout( () => {
+                memberElement.addUserInfo(user)
+            })
             membersContainer.appendChild(memberElement);
         });
     }
 
     async updateUnreadMemberMessages() {
         const membersContainer = this.shadowRoot.querySelector('.members-container');
+
         await Promise.all(this.convo_list_users.map(async (user) => {
             if (!user.id || !user.userName) {
                 console.warn(`invalid user data : ${JSON.stringify(user)}`)
@@ -1290,12 +1297,14 @@ export class chat extends HTMLElement {
 
                 const messages = this.databaseMessages.get(user.id)
                 if (!messages || messages.length == 0) {
-                    console.warn(`no messages data found for user : ${JSON.stringify(user)}`)
+                    // console.warn(`no messages data found for user : ${JSON.stringify(user)}`)
                     return 
                 }
 
                 const unreadMessagesCount = this.getUnreadMessagesCount(user.id)
                 const lastMessage = messages.at(-1)
+                user.unreadMessagesCount = unreadMessagesCount
+                user.lastMessage = lastMessage
 
                 member.displayMessageCounter(unreadMessagesCount, lastMessage)
                 member.updateLastMessage(lastMessage)

@@ -66,59 +66,56 @@ export class profile extends HTMLElement {
         super();
         this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(profileTemplate.content.cloneNode(true));
-    
+        this.profiledata = {
+            "name": "",
+            "profilePic": "",
+            "phoneNumber": "",
+            "discription": "",
+        }
     }
     
     connectedCallback() {
-        this.render();
     }
     
+    addUserInfo(data) {
+        if (data) {
+            this.profiledata.name = data.name
+            this.profiledata.phoneNumber = data.phoneNumber
+            this.profiledata.profilePic = data.profilePic
+            this.profiledata.description = data.description
+
+            this.render()
+        }
+    }
     render() {
-        const username = this.getAttribute('username');
-        const userProfilePic = this.getAttribute('profile-pic');
-        
+        if (!this.profiledata) return 
+
         const userProfileInfo = this.shadowRoot.querySelector('#user-profile-info');
-        const wp_userProfileInfo = document.createElement('wc-card');
-        
-        
-        
+
         // set username
         const wp_card = document.createElement('wc-card');
         const userNameIcon = "assets/circle-user.svg";
-        const userName = this.getAttribute('username');
-        wp_card.setAttribute('svg-path', userNameIcon);
-        wp_card.setAttribute('header', "username");
-        wp_card.setAttribute('body', userName);
+        wp_card.addUserInfo('name', this.profiledata.name, userNameIcon);
         userProfileInfo.appendChild(wp_card);
         
         // set phone number
         const phoneNUmberIcon = "assets/phone.svg";
-        const phone = "06365489752"; //this.getAttribute('phonenumber');
-        const wp_phone = document.createElement('wc-card');
-        wp_phone.setAttribute('svg-path', phoneNUmberIcon);
-        wp_phone.setAttribute('header', "Phone number");
-        wp_phone.setAttribute('body', phone);
-        userProfileInfo.appendChild(wp_phone);
+        const wcPhone = document.createElement('wc-card');
+        wcPhone.addUserInfo("phone", this.profiledata.phoneNumber, phoneNUmberIcon)
+        userProfileInfo.appendChild(wcPhone);
         
         // set description
         const descriptionIcon = "assets/description.svg";
-        const description = "this is a description ..."; //this.getAttribute('description');
-        const wp_description = document.createElement('wc-card');
-        wp_description.setAttribute('svg-path', descriptionIcon);
-        wp_description.setAttribute('header', "Description");
-        wp_description.setAttribute('body', description);
-        userProfileInfo.appendChild(wp_description);
+        const wcDescription = document.createElement('wc-card');
+        wcDescription.addUserInfo('description', this.profiledata.description, descriptionIcon);
+        userProfileInfo.appendChild(wcDescription);
 
     
         const userImageElement = this.shadowRoot.querySelector('.user-image');
         const usernameElement = this.shadowRoot.querySelector('.user-name');
 
-        userImageElement.src = userProfilePic;
-        usernameElement.textContent = username;
-    }
-    
-    static get observedAttributes() {
-        return ['username', 'profile-pic', 'last-message'];
+        userImageElement.src = this.profiledata.profilePic;
+        usernameElement.textContent = this.profiledata.name;
     }
     
 }

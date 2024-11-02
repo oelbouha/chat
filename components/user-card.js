@@ -5,7 +5,6 @@ cardTemplate.innerHTML = /*html*/ `
         @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
 
         :host {
-            display: block;
             width: 100%;
             height: 100%;
         }
@@ -49,25 +48,34 @@ export class card extends HTMLElement {
         super();
         this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(cardTemplate.content.cloneNode(true));
-    
+        this.data = {
+            "key": "",
+            "value": "",
+            "svg": ""
+        }
     }
     
     connectedCallback() {
-        this.render();
     }
     
-    render() {
-        const svgPath = this.getAttribute('svg-path');
-        const icon = this.shadowRoot.querySelector('.card-icon');
-        icon.src = svgPath;
+    addUserInfo(key, value, svg) {
+        this.data.key = key
+        this.data.value = value
+        this.data.svg = svg
 
+        this.render()
+    }
+    render() {
+        if (!this.data) return 
         
+        const icon = this.shadowRoot.querySelector('.card-icon');
+        icon.src = this.data.svg;
+
         const header = this.shadowRoot.querySelector('.card-header');
-        header.textContent = this.getAttribute('header');
+        header.textContent = this.data.key;
 
         const body = this.shadowRoot.querySelector('#card-body');
-        body.textContent = this.getAttribute('body');
-       
+        body.textContent = this.data.value
     }
     
     static get observedAttributes() {
