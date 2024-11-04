@@ -8,6 +8,7 @@ import { websocket } from "./components/net.js";
 import { inviteModal } from "./components/inviteModal.js";
 import { imageMessage } from "./components/image-message.js";
 import { videoMessage } from "./components/video-message.js";
+import { inviteGame } from "./components/invite-game.js"
 
 
 
@@ -20,6 +21,7 @@ customElements.define("wc-card", card);
 customElements.define("wc-text-message", textMessage);
 customElements.define("wc-image-message", imageMessage);
 customElements.define("wc-video-message", videoMessage);
+customElements.define("wc-invite-game", inviteGame);
 
 
 

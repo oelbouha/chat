@@ -1,71 +1,15 @@
 /*******      profile  Component ******/
 
-const profileTemplate = document.createElement('template');
-
-profileTemplate.innerHTML = /*html*/ `
-    <style>
-         @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-        
-        :host {
-            display: block;
-        }
-        
-    .profile-container {
-        display: flex;
-        flex-direction: column;
-        gap: 1em;
-        height: 100%;
-        width: 100%;
-        overflow-y: auto;
-    }
-
-    .profile-pic {
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background-color: #022f40;
-        border-radius: 14px;
-    }
-    .user-image {
-        width:  150px;
-        height: 150px;
-        border-radius: 50%;
-        object-fit: cover;
-    }
-
-    
-    .profile-header {
-        font-weight: bold;
-    }
-
-    #user-profile-info {
-        color: white;
-        background-color: #022f40;
-        border-radius: 14px;
-    }
-
-    </style>
-    <div class="profile-container p-4">
-        <div class="profile-header">
-            <h3 >Profile info</h3>
-        </div>
-        
-        <div class="profile-pic p-3">
-            <img class="user-image" src="/api/placeholder/50/50" alt="profile picture">
-            <h4 class="user-name"></h4>
-        </div>
-        <div id="user-profile-info" class="p-3"></div>
-    </div>
-
-`;
 
 export class profile extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({mode:'open'});
-        this.shadowRoot.appendChild(profileTemplate.content.cloneNode(true));
+
+        this.container = document.createElement('div')
+        this.container.innerHTML = this.html()
+		this.shadowRoot.appendChild(this.container);
+        
         this.profiledata = {
             "name": "",
             "profilePic": "",
@@ -118,4 +62,65 @@ export class profile extends HTMLElement {
         usernameElement.textContent = this.profiledata.name;
     }
     
+    html() {
+        return (
+            /*html*/ `
+            <style>
+            @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+        
+        :host {
+            display: block;
+        }
+            
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+            height: 100%;
+            width: 100%;
+            overflow-y: auto;
+        }
+
+        .profile-pic {
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #022f40;
+            border-radius: 14px;
+        }
+        .user-image {
+            width:  150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+
+        .profile-header {
+            font-weight: bold;
+        }
+
+        #user-profile-info {
+            color: white;
+            background-color: #022f40;
+            border-radius: 14px;
+        }
+
+        </style>
+        <div class="profile-container p-4">
+        <div class="profile-header">
+            <h3 >Profile info</h3>
+        </div>
+        
+        <div class="profile-pic p-3">
+            <img class="user-image" src="/api/placeholder/50/50" alt="profile picture">
+            <h4 class="user-name"></h4>
+        </div>
+        <div id="user-profile-info" class="p-3"></div>
+        </div>
+        `
+        )
+    }
 }

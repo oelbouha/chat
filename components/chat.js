@@ -24,391 +24,14 @@ function getTimestamp(format = 'ms') {
     return formats[format] || formats.ms;
 }
 
-const template = document.createElement('template');
-
-template.innerHTML = /*html*/`
-<style>
-    @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-
-    :host {
-        display: block;
-        height: 100%;
-        width: 100%;
-    }
-
-    .chat-container {
-        height: 100vh;
-    }
-
-    #convo-list {
-        min-width: 400px;
-        background-color: #f8f9fa;
-        border-right: 1px solid #b8adae;
-        transition: width 0.3s ease;
-    }
-
-
-    #convo-messages-container {
-        background-color: #e0e0e0;
-        flex-grow: 1;
-        transition: width 0.3s ease;
-        display: flex;
-        flex-direction: column;
-    }
-
-    #user-profile {
-        width: 350px;
-        min-width: 300px;
-        background-color: #f8f9fa;
-        border-left: 1px solid #dee2e6;
-        transition: width 0.3s ease;
-    }
-
-    .members-container {
-        overflow-y: auto;
-        max-height: calc(100vh - 120px);
-    }
-
-    .search-container {
-        position: relative;
-        color: white;
-        margin-bottom: 20px;
-        display: flex;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 1em;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 1.5rem;
-        height: 1.5rem;
-        pointer-events: none;
-    }
-
-    #convo-search:focus {
-        outline: none;
-        border-color: #ccc;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-    }
-
-    #convo-search {
-        color: #022f40;
-        border-radius: 8px;
-        border: 1.5px solid #dee2e6;
-        padding: 10px;
-        background-color: #f8f9fa;
-        padding-left: 3rem;
-        width: 100%;
-    }
-
-    #user-header-container {
-        width: 100%;
-        background-color: #f8f9fa;
-        display: flex;
-        flex-direction: row;
-    }
-
-    .member {
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.5em;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .profile-pic {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        margin-right: 14px;
-        overflow: hidden;
-        border: 1px solid #e0e0e0;
-    }
-
-    #user-image {
-        width: 100%;
-        height: 100%;
-
-        object-fit: cover;
-    }
-    .convo-username {
-        font-weight: bold;
-    }
-    
-    .convo-user-status {
-        font-size: 12px;
-    }
-
-    #user-convo-header {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 2px;
-    }
-    #list-icon-container .list-icon, .profile-icon-container .profile-icon {
-        display: none;
-    }
-
-    /* profile offcanvas */ 
-        .profileOffcanvas {
-            position: fixed;
-            top: 0;
-            right: -200%;
-            height: 100%;
-            background-color: #fff;
-            transition: right 0.3s ease-in-out;
-            z-index: 1000;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-        }
-
-        .profileOffcanvas.show {
-            right: 0;
-        }
-
-        .profile-offcanvas-header {
-            padding: 1rem;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-
-        #profileOffcanvas {
-            overflow-y: auto;
-        }
-
-        #chat-conversation {
-            width: 100%;
-            height: 100%;
-            background-color: #e0e0e0;
-            overflow-y: auto;
-        }
-        #conversation-background {
-            object-fit: contain;
-            width: 100%;
-            height: 100%;
-        }
-    
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
-            display: none;
-        }
-        
-        .overlay.show {
-            display: block;
-        }
-
-        #user-profile, #user-header-container{
-            display: none;
-        }
-
-
-        /* input message */
-        #input-message-container {
-            display: none;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-            padding: 0.5em;
-            box-sizing: border-box;
-        }
-        
-        #message-input {
-            flex-grow: 1;
-            margin: 0 10px;
-            border-radius: 8px;
-            border: 1.5px solid #dee2e6;
-            background-color: none;
-            padding: 0.5em;
-        }
-
-        #message-input:focus {
-            outline: none;
-            border-color: #ccc;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .last-message {
-            font-size: 0.8em;
-            color: #6c757d;
-        }
-
-        .add-file-icon {
-            cursor: pointer;
-        }
-
-        #send-btn-icon {
-            cursor: pointer;
-            width:  25px;
-            height: 25px;
-            display: none;
-        }
-
-        #send-btn-icon.visible {
-            display: block;
-        }
-        .custom-file-upload {
-            background-color: blue;
-            border: 1px solid #ccc;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        input[type="file"] {
-            display: none;
-        }
-
-        .chat-header {
-            color: #385a64;
-        }
-        .return-icon-container {
-            display: none;
-        }
-
-    /* break points */
-    @media (max-width: 1200px) {
-        #user-profile {
-            display: none !important;
-		}
-        .profile-icon-container .profile-icon {
-            display: initial !important;
-            width: 30px;
-            height: 30px;
-        }
-    }
-    
-
-    @media (max-width: 800px) {
-        #convo-list {
-            position: fixed;
-            top: 0;
-            left: -200%;
-            height: 100%;
-            background-color: #fff;
-            transition: right 0.3s ease-in-out;
-            z-index: 20000;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-        }
-        #min {
-            width: 100px;
-            height: 100px;
-            background-color: red;
-        }
-        #list-icon-container .list-icon, .profile-icon-container .profile-icon {
-            display: initial !important;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .return-icon-container {
-            display: initial !important;
-            position: fixed;
-            top : 2%;
-            left: 2%;
-            cursor: pointer;
-        }
-        .return-icon {
-            width:  20px;
-            height: 20px;
-        }
-    }
-</style>
-
-<body>
-    <div class="chat-container position-relative">
-        
-        <div class="d-flex h-100 position-relative">
-        <div id="convo-list" class="p-3">
-                <h4 class="chat-header mb-3">Chats</h5>
-                <div class="search-container">
-                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <input type="search" id="convo-search"  placeholder="Search">
-                </div>
-                <div class="members-container"></div>
-            </div>
-
-            <div id="convo-messages-container">
-                <div id="user-header-container">
-                    <div class="member">             
-                        <div id="user-convo-header">
-                            <div id="list-icon-container">
-                                <svg class="list-icon" fill="#000000" width="25px" height="25px" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M228,128.00037a12.00028,12.00028,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12.00028,12.00028,0,0,1,228,128.00037Zm-188-52H216a12,12,0,0,0,0-24H40a12,12,0,1,0,0,24Zm176,104H40a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24Z"/>
-                                </svg>
-                            </div>
-                            <div class="profile-pic">
-                                <img id="user-image" src="assets/after.png" alt="profile picture" class="img-fluid">
-                            </div>
-                            <div class="convo-user-heaader-info">
-                                <div class="convo-username">username</div>
-                                <div class="convo-user-status"> online</div>
-                            </div>
-                        </div>
-                            <div class="profile-icon-container p-2">
-                                <img class="profile-icon" src="assets/info.svg" >
-                            </div>
-                    </div>
-                </div>
-
-                <div id="chat-conversation" class="p-3">
-                    
-                    <img id="conversation-background" src="assets/conversation.png" />
-                    <div class="return-icon-container">
-                        <svg class="return-icon" xmlns="http://www.w3.org/2000/svg" id="Bold" viewBox="0 0 24 24" width="512" height="512"><path d="M12,24a1.493,1.493,0,0,1-1.06-.439L3.264,15.889a5.5,5.5,0,0,1,0-7.778L10.936.439a1.5,1.5,0,1,1,2.121,2.122L5.385,10.232a2.5,2.5,0,0,0,0,3.536l7.672,7.671A1.5,1.5,0,0,1,12,24Z"/><path d="M21.542,24a1.5,1.5,0,0,1-1.061-.439L11.4,14.475a3.505,3.505,0,0,1,0-4.95L20.481.439A1.5,1.5,0,0,1,22.6,2.561l-9.086,9.085a.5.5,0,0,0,0,.708L22.6,21.439A1.5,1.5,0,0,1,21.542,24Z"/></svg>
-                    </div>
-                </div>
-                
-                <div id="input-message-container">
-                    <div class="input_container">
-                        <label for="files" class="btn">
-                            <svg class="add-file-icon" width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M7 11C8.10457 11 9 10.1046 9 9C9 7.89543 8.10457 7 7 7C5.89543 7 5 7.89543 5 9C5 10.1046 5.89543 11 7 11Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M5.56055 21C11.1305 11.1 15.7605 9.35991 21.0005 15.7899" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M12.28 3H5C3.93913 3 2.92172 3.42136 2.17157 4.17151C1.42142 4.92165 1 5.93913 1 7V17C1 18.0609 1.42142 19.0782 2.17157 19.8284C2.92172 20.5785 3.93913 21 5 21H17C18.0609 21 19.0783 20.5785 19.8284 19.8284C20.5786 19.0782 21 18.0609 21 17V12" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M18.75 8.82996V0.829956" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M15.5508 4.02996L18.7508 0.829956L21.9508 4.02996" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </label>
-                        <input id="files" style="display:none;" type="file">
-                    </div>
-                    <input id="message-input" type="text" placeholder="Type a message">
-                    <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512">
-                        <path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z" fill="#0000FF"/>
-                    </svg>                  
-                </div>
-            </div>
-            
-            <div id="user-profile"></div>
-        </div>
-    </div>
-
-    <div class="profileOffcanvas d-flex flex-column col-lg-4 col-md-4 col-sm-6 " id="profileOffcanvas">
-        <div class="profile-offcanvas-header">
-            <button type="button" class="btn-close" id="profileOffcanvasCloseBtn"></button>
-        </div>
-        <div class="custom-offcanvas-body"></div>
-    </div>
-    <div class="overlay" id="overlay" ></div>
-
-</body>
-`;
-
 export class chat extends HTMLElement {
     constructor() {
         super();
         
         const shadowRoot = this.attachShadow({mode:'open'});
-        let templateClone = template.content.cloneNode(true);
-        shadowRoot.append(templateClone);        
+        this.container = document.createElement('div')
+        this.container.innerHTML = this.html()
+        shadowRoot.append(this.container);   
 
         this.convo_list_users = [
         {
@@ -1310,5 +933,385 @@ export class chat extends HTMLElement {
                 member.updateLastMessage(lastMessage)
             }
         }))
+    }
+
+    html() {
+        return (
+                /*html*/`
+    <style>
+        @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+
+        :host {
+            display: block;
+            height: 100%;
+            width: 100%;
+        }
+
+        .chat-container {
+            height: 100vh;
+        }
+
+        #convo-list {
+            min-width: 400px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #b8adae;
+            transition: width 0.3s ease;
+        }
+
+
+        #convo-messages-container {
+            background-color: #e0e0e0;
+            flex-grow: 1;
+            transition: width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #user-profile {
+            width: 350px;
+            min-width: 300px;
+            background-color: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            transition: width 0.3s ease;
+        }
+
+        .members-container {
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+        }
+
+        .search-container {
+            position: relative;
+            color: white;
+            margin-bottom: 20px;
+            display: flex;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1em;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1.5rem;
+            height: 1.5rem;
+            pointer-events: none;
+        }
+
+        #convo-search:focus {
+            outline: none;
+            border-color: #ccc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #convo-search {
+            color: #022f40;
+            border-radius: 8px;
+            border: 1.5px solid #dee2e6;
+            padding: 10px;
+            background-color: #f8f9fa;
+            padding-left: 3rem;
+            width: 100%;
+        }
+
+        #user-header-container {
+            width: 100%;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .member {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5em;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 14px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        #user-image {
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+        }
+        .convo-username {
+            font-weight: bold;
+        }
+        
+        .convo-user-status {
+            font-size: 12px;
+        }
+
+        #user-convo-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 2px;
+        }
+        #list-icon-container .list-icon, .profile-icon-container .profile-icon {
+            display: none;
+        }
+
+        /* profile offcanvas */ 
+            .profileOffcanvas {
+                position: fixed;
+                top: 0;
+                right: -200%;
+                height: 100%;
+                background-color: #fff;
+                transition: right 0.3s ease-in-out;
+                z-index: 1000;
+                box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            }
+
+            .profileOffcanvas.show {
+                right: 0;
+            }
+
+            .profile-offcanvas-header {
+                padding: 1rem;
+                border-bottom: 1px solid #dee2e6;
+            }
+
+
+            #profileOffcanvas {
+                overflow-y: auto;
+            }
+
+            #chat-conversation {
+                width: 100%;
+                height: 100%;
+                background-color: #e0e0e0;
+                overflow-y: auto;
+            }
+            #conversation-background {
+                object-fit: contain;
+                width: 100%;
+                height: 100%;
+            }
+        
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 5;
+                display: none;
+            }
+            
+            .overlay.show {
+                display: block;
+            }
+
+            #user-profile, #user-header-container{
+                display: none;
+            }
+
+
+            /* input message */
+            #input-message-container {
+                display: none;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                background-color: #f8f9fa;
+                padding: 0.5em;
+                box-sizing: border-box;
+            }
+            
+            #message-input {
+                flex-grow: 1;
+                margin: 0 10px;
+                border-radius: 8px;
+                border: 1.5px solid #dee2e6;
+                background-color: none;
+                padding: 0.5em;
+            }
+
+            #message-input:focus {
+                outline: none;
+                border-color: #ccc;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            }
+
+            .last-message {
+                font-size: 0.8em;
+                color: #6c757d;
+            }
+
+            .add-file-icon {
+                cursor: pointer;
+            }
+
+            #send-btn-icon {
+                cursor: pointer;
+                width:  25px;
+                height: 25px;
+                display: none;
+            }
+
+            #send-btn-icon.visible {
+                display: block;
+            }
+            .custom-file-upload {
+                background-color: blue;
+                border: 1px solid #ccc;
+                color: white;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            input[type="file"] {
+                display: none;
+            }
+
+            .chat-header {
+                color: #385a64;
+            }
+            .return-icon-container {
+                display: none;
+            }
+
+        /* break points */
+        @media (max-width: 1200px) {
+            #user-profile {
+                display: none !important;
+            }
+            .profile-icon-container .profile-icon {
+                display: initial !important;
+                width: 30px;
+                height: 30px;
+            }
+        }
+        
+
+        @media (max-width: 800px) {
+            #convo-list {
+                position: fixed;
+                top: 0;
+                left: -200%;
+                height: 100%;
+                background-color: #fff;
+                transition: right 0.3s ease-in-out;
+                z-index: 20000;
+                box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            }
+            #min {
+                width: 100px;
+                height: 100px;
+                background-color: red;
+            }
+            #list-icon-container .list-icon, .profile-icon-container .profile-icon {
+                display: initial !important;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+            .return-icon-container {
+                display: initial !important;
+                position: fixed;
+                top : 2%;
+                left: 2%;
+                cursor: pointer;
+            }
+            .return-icon {
+                width:  20px;
+                height: 20px;
+            }
+        }
+    </style>
+
+    <body>
+        <div class="chat-container position-relative">
+            
+            <div class="d-flex h-100 position-relative">
+            <div id="convo-list" class="p-3">
+                    <h4 class="chat-header mb-3">Chats</h5>
+                    <div class="search-container">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <input type="search" id="convo-search"  placeholder="Search">
+                    </div>
+                    <div class="members-container"></div>
+                </div>
+
+                <div id="convo-messages-container">
+                    <div id="user-header-container">
+                        <div class="member">             
+                            <div id="user-convo-header">
+                                <div id="list-icon-container">
+                                    <svg class="list-icon" fill="#000000" width="25px" height="25px" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M228,128.00037a12.00028,12.00028,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12.00028,12.00028,0,0,1,228,128.00037Zm-188-52H216a12,12,0,0,0,0-24H40a12,12,0,1,0,0,24Zm176,104H40a12,12,0,0,0,0,24H216a12,12,0,0,0,0-24Z"/>
+                                    </svg>
+                                </div>
+                                <div class="profile-pic">
+                                    <img id="user-image" src="assets/after.png" alt="profile picture" class="img-fluid">
+                                </div>
+                                <div class="convo-user-heaader-info">
+                                    <div class="convo-username">username</div>
+                                    <div class="convo-user-status"> online</div>
+                                </div>
+                            </div>
+                                <div class="profile-icon-container p-2">
+                                    <img class="profile-icon" src="assets/info.svg" >
+                                </div>
+                        </div>
+                    </div>
+
+                    <div id="chat-conversation" class="p-3">
+                        
+                        <img id="conversation-background" src="assets/conversation.png" />
+                        <div class="return-icon-container">
+                            <svg class="return-icon" xmlns="http://www.w3.org/2000/svg" id="Bold" viewBox="0 0 24 24" width="512" height="512"><path d="M12,24a1.493,1.493,0,0,1-1.06-.439L3.264,15.889a5.5,5.5,0,0,1,0-7.778L10.936.439a1.5,1.5,0,1,1,2.121,2.122L5.385,10.232a2.5,2.5,0,0,0,0,3.536l7.672,7.671A1.5,1.5,0,0,1,12,24Z"/><path d="M21.542,24a1.5,1.5,0,0,1-1.061-.439L11.4,14.475a3.505,3.505,0,0,1,0-4.95L20.481.439A1.5,1.5,0,0,1,22.6,2.561l-9.086,9.085a.5.5,0,0,0,0,.708L22.6,21.439A1.5,1.5,0,0,1,21.542,24Z"/></svg>
+                        </div>
+                    </div>
+                    
+                    <div id="input-message-container">
+                        <div class="input_container">
+                            <label for="files" class="btn">
+                                <svg class="add-file-icon" width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 11C8.10457 11 9 10.1046 9 9C9 7.89543 8.10457 7 7 7C5.89543 7 5 7.89543 5 9C5 10.1046 5.89543 11 7 11Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M5.56055 21C11.1305 11.1 15.7605 9.35991 21.0005 15.7899" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12.28 3H5C3.93913 3 2.92172 3.42136 2.17157 4.17151C1.42142 4.92165 1 5.93913 1 7V17C1 18.0609 1.42142 19.0782 2.17157 19.8284C2.92172 20.5785 3.93913 21 5 21H17C18.0609 21 19.0783 20.5785 19.8284 19.8284C20.5786 19.0782 21 18.0609 21 17V12" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M18.75 8.82996V0.829956" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M15.5508 4.02996L18.7508 0.829956L21.9508 4.02996" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </label>
+                            <input id="files" style="display:none;" type="file">
+                        </div>
+                        <input id="message-input" type="text" placeholder="Type a message">
+                        <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512">
+                            <path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z" fill="#0000FF"/>
+                        </svg>                  
+                    </div>
+                </div>
+                
+                <div id="user-profile"></div>
+            </div>
+        </div>
+
+        <div class="profileOffcanvas d-flex flex-column col-lg-4 col-md-4 col-sm-6 " id="profileOffcanvas">
+            <div class="profile-offcanvas-header">
+                <button type="button" class="btn-close" id="profileOffcanvasCloseBtn"></button>
+            </div>
+            <div class="custom-offcanvas-body"></div>
+        </div>
+        <div class="overlay" id="overlay" ></div>
+
+    </body>
+    `
+        )
     }
 }

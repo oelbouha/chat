@@ -1,145 +1,15 @@
 
 import {formatTime} from "./net.js"
 
-const userMessageTemplate = document.createElement('template');
-
-userMessageTemplate.innerHTML = /*html*/ `
-	<style>
-		 @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-         
-		:host {
-            width: 100%;
-            height: 100%;
-        }
-
-         .message {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 4px;
-        }
-        
-        #modal-container {
-            display: none;
-            position: fixed;
-            inset: 0; /* Shorthand for top: 0; right: 0; bottom: 0; left: 0; */
-            background-color: rgba(0, 0, 0, 0.9);
-            z-index: 9999;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        #close-btn {
-            position: fixed;
-            top: 1%;
-            right: 1%;
-        }
-
-        #msg-status-container {
-            position: absolute;
-            bottom: 1%;
-            right: 2.5%;
-            display: flex;
-        }
-
-        .message-status-icon {
-            width:  15px;
-            height: 15px;
-        }
-
-        .msg-container {
-            display: flex;
-            flex-direction: column;
-            align-items: end;
-            background-color: #022f40;
-            border-radius: 7.5px;
-            padding: 3px 4px 3px 4px;
-            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
-            cursor: pointer;
-        }
-
-        .user-message {
-            align-items: flex-end;
-        }
-
-        .message-time {
-            align-self: flex-end;
-            font-size: 12px;
-            color: #fff;
-            min-width: 50px;
-        }
-        #image-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            border-radius: 7.5px;
-        }
-
-		#image-src {
-            display: none;
-            border-radius: 7.5px;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-		}
-		
-        #image-modal {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #img-modal-src {
-            max-width: 90dvw;
-            max-height: 90dvh;
-        }
-
-        .spinner-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 150px;
-            width: 150px;
-            transition: all 0.3s ease;
-            background: linear-gradient(135deg, #03387d, #7dceac);
-        }
-        .spinner {
-            width: 50px;
-            height: 50px;
-        }
-
-	</style>
-	<div class="message user-message position-relative">
-        <div class="msg-container position-relative" >
-            <div class="image-container">
-				<img id="image-src" src="" />
-			</div>
-            <div class="spinner-container">
-                <svg class="spinner"  xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g stroke="white"><circle cx="12" cy="12" r="9.5" fill="none" stroke-linecap="round" stroke-width="3"><animate attributeName="stroke-dasharray" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0 150;42 150;42 150;42 150"/><animate attributeName="stroke-dashoffset" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0;-16;-59;-59"/></circle><animateTransform attributeName="transform" dur="2s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></g></svg>
-            </div>
-            <div id="msg-status-container" >
-                <div class="message-time"></div>
-                <div class="message-status">
-                    <img class="message-status-icon" src="assets/not-send.svg" />
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-container">
-        <div id="image-modal">
-            <button id="close-btn" type="button" class="btn-close btn-close-white" aria-label="Close"></button>
-            <img id="img-modal-src" src="" />
-        </div>
-    </div>
-`;
-
 export class imageMessage extends HTMLElement {
 	constructor() {
 
 		super();
 		this.attachShadow({mode:'open'});
-        this.shadowRoot.appendChild(userMessageTemplate.content.cloneNode(true));
+
+        this.container = document.createElement('div')
+        this.container.innerHTML = this.html()
+		this.shadowRoot.appendChild(this.container);
 
         this.imagedata = {
             "file": "",
@@ -286,5 +156,140 @@ export class imageMessage extends HTMLElement {
 
     static getAttribute() {
         return ["user"];
+    }
+
+    html() {
+        return (
+            /*html*/ `
+            <style>
+            @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+            
+            :host {
+                width: 100%;
+                height: 100%;
+            }
+
+                .message {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 4px;
+            }
+            
+            #modal-container {
+                display: none;
+                position: fixed;
+                inset: 0; /* Shorthand for top: 0; right: 0; bottom: 0; left: 0; */
+                background-color: rgba(0, 0, 0, 0.9);
+                z-index: 9999;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            #close-btn {
+                position: fixed;
+                top: 1%;
+                right: 1%;
+            }
+
+            #msg-status-container {
+                position: absolute;
+                bottom: 1%;
+                right: 2.5%;
+                display: flex;
+            }
+
+            .message-status-icon {
+                width:  15px;
+                height: 15px;
+            }
+
+            .msg-container {
+                display: flex;
+                flex-direction: column;
+                align-items: end;
+                background-color: #022f40;
+                border-radius: 7.5px;
+                padding: 3px 4px 3px 4px;
+                box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+                cursor: pointer;
+            }
+
+            .user-message {
+                align-items: flex-end;
+            }
+
+            .message-time {
+                align-self: flex-end;
+                font-size: 12px;
+                color: #fff;
+                min-width: 50px;
+            }
+            #image-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+                border-radius: 7.5px;
+            }
+
+            #image-src {
+                display: none;
+                border-radius: 7.5px;
+                width: auto;
+                height: auto;
+                object-fit: contain;
+            }
+            
+            #image-modal {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            #img-modal-src {
+                max-width: 90dvw;
+                max-height: 90dvh;
+            }
+
+            .spinner-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 150px;
+                width: 150px;
+                transition: all 0.3s ease;
+                background: linear-gradient(135deg, #03387d, #7dceac);
+            }
+            .spinner {
+                width: 50px;
+                height: 50px;
+            }
+
+            </style>
+            <div class="message user-message position-relative">
+            <div class="msg-container position-relative" >
+                <div class="image-container">
+                    <img id="image-src" src="" />
+                </div>
+                <div class="spinner-container">
+                    <svg class="spinner"  xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><g stroke="white"><circle cx="12" cy="12" r="9.5" fill="none" stroke-linecap="round" stroke-width="3"><animate attributeName="stroke-dasharray" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0 150;42 150;42 150;42 150"/><animate attributeName="stroke-dashoffset" calcMode="spline" dur="1.5s" keySplines="0.42,0,0.58,1;0.42,0,0.58,1;0.42,0,0.58,1" keyTimes="0;0.475;0.95;1" repeatCount="indefinite" values="0;-16;-59;-59"/></circle><animateTransform attributeName="transform" dur="2s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></g></svg>
+                </div>
+                <div id="msg-status-container" >
+                    <div class="message-time"></div>
+                    <div class="message-status">
+                        <img class="message-status-icon" src="assets/not-send.svg" />
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div id="modal-container">
+            <div id="image-modal">
+                <button id="close-btn" type="button" class="btn-close btn-close-white" aria-label="Close"></button>
+                <img id="img-modal-src" src="" />
+            </div>
+            </div>
+        `
+        )
     }
 }
