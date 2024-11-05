@@ -63,6 +63,7 @@ export class chat extends HTMLElement {
 
         this.overlayActive = false
         this.offcanvasActive = false
+        this.inviteDropDownActive = false;
         websocket.onmessage = (e) => {
             const message = JSON.parse(e.data);   
             if (message.m == "msg")
@@ -126,10 +127,12 @@ export class chat extends HTMLElement {
     displayClientProfile(event) {
         const profilePic = event.detail.profilePic;
         const userProfile = this.shadowRoot.querySelector('#user-profile');
-        if (userProfile.style.display != 'block')
-            userProfile.style.display = 'block';
-        userProfile.innerHTML = ``;
+        // if (userProfile.style.display != 'block')
+            userProfile.style.display = 'flex';
+        // userProfile.innerHTML = ``;
 
+        const profileInfo = userProfile.querySelector(".profile-info")
+        profileInfo.innerHTML = ``
 
         const profileComponent = document.createElement('wc-chat-profile');
         const data = {
@@ -140,7 +143,7 @@ export class chat extends HTMLElement {
         }
         profileComponent.addUserInfo(data)
 
-        userProfile.appendChild(profileComponent);
+        profileInfo.appendChild(profileComponent);
     }
 
     async fetchData(userId, clientId) {
@@ -223,6 +226,35 @@ export class chat extends HTMLElement {
             }
             else if (this.offcanvasActive)
                 this.showOverlay()
+        })
+
+        const inviteGame = this.shadowRoot.querySelector("#invite-game-icon")
+        inviteGame.addEventListener('click', () => {
+            console.log("clicked")
+            const dropdown = this.shadowRoot.querySelector('.dropdown-content')
+            if (this.inviteDropDownActive) {
+                dropdown.style.display = "none"
+                this.inviteDropDownActive = false
+            }
+            else {
+                dropdown.style.display = "flex"
+                this.inviteDropDownActive = true;
+            }
+        })
+        const pingPongTag = this.shadowRoot.querySelector("#ping-pong")
+        pingPongTag.addEventListener('click', ()=> {
+            const dropdown = this.shadowRoot.querySelector('.dropdown-content')
+            dropdown.style.display = "none"
+            const message = {
+                "m": "msg",
+                "clt": "1",
+                "cnt": "game request",
+                "tp": "INVITE",
+                "status": "sn",
+                "time": "4:30AM"
+            }
+            this.displayUserMessage(message)
+
         })
     }
 
@@ -738,6 +770,18 @@ export class chat extends HTMLElement {
                 UserMessageComponent.setAttribute("message-id",  message.msg);
             conversation.appendChild(UserMessageComponent);
         }
+        else if (message.tp == "INVITE") {
+            const UserMessageComponent = document.createElement('wc-game-invite');
+            UserMessageComponent.addMessage(message);
+            UserMessageComponent.setAttribute("message-id",  message.identifier);
+            if (message.msg)
+                UserMessageComponent.setAttribute("message-id",  message.msg);
+            conversation.appendChild(UserMessageComponent);
+
+            const userProfile = this.shadowRoot.querySelector("#user-profile")
+            console.log(userProfile)
+            userProfile.appendChild(UserMessageComponent)
+        }
         const usersContainer = this.shadowRoot.querySelector('.members-container');
         const userComponent = usersContainer.querySelector(`wc-chat-member[username="${this.activeMemberUsername}"]`);
         if (!userComponent) {
@@ -968,8 +1012,10 @@ export class chat extends HTMLElement {
         }
 
         #user-profile {
-            width: 350px;
-            min-width: 300px;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             background-color: #f8f9fa;
             border-left: 1px solid #dee2e6;
             transition: width 0.3s ease;
@@ -1184,6 +1230,43 @@ export class chat extends HTMLElement {
                 display: none;
             }
 
+        #invite-game-icon {
+            width: 25px;
+            cursor: pointer;
+        }
+
+
+/*  drop down content */
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #022f40;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      flex-direction: column;
+      z-index: 15;
+      top: -585%;
+    }
+    
+    .dropdown-content dt:hover {
+        background: #e0e0e0;
+        color: #022f40;
+        cursor: pointer;
+    }
+    .dropdown-content dt {
+      color: white;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+    }
+    .dropdown-content h5 {
+      color: white;
+      padding: 10px 10px;
+      display: block;
+    }
+
+
         /* break points */
         @media (max-width: 1200px) {
             #user-profile {
@@ -1270,7 +1353,7 @@ export class chat extends HTMLElement {
                         </div>
                     </div>
 
-                    <div id="chat-conversation" class="p-3">
+                    <div id="chat-conversation" class="p-3" class="position-relative">
                         
                         <img id="conversation-background" src="assets/conversation.png" />
                         <div class="return-icon-container">
@@ -1278,7 +1361,7 @@ export class chat extends HTMLElement {
                         </div>
                     </div>
                     
-                    <div id="input-message-container">
+                    <div id="input-message-container" >
                         <div class="input_container">
                             <label for="files" class="btn">
                                 <svg class="add-file-icon" width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1291,6 +1374,17 @@ export class chat extends HTMLElement {
                             </label>
                             <input id="files" style="display:none;" type="file">
                         </div>
+                        <div class="dropdown">
+                            <img id="invite-game-icon" class="game-icon" src="assets/game.svg" alt="Game Icon" />
+                            <div class="dropdown-content">
+                                <h5>Invite Friend</h5>
+                                <dl>
+                                    <dt id="ping-pong">Ping pong</dt>
+                                    <dt id="slap-hand">Slap Hand</dt>
+                                </dl> 
+                            </div>
+                        </div>
+
                         <input id="message-input" type="text" placeholder="Type a message">
                         <svg id="send-btn-icon" xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24" width="512" height="512">
                             <path d="m4.034.282C2.981-.22,1.748-.037.893.749.054,1.521-.22,2.657.18,3.717l4.528,8.288L.264,20.288c-.396,1.061-.121,2.196.719,2.966.524.479,1.19.734,1.887.734.441,0,.895-.102,1.332-.312l19.769-11.678L4.034.282Zm-2.002,2.676c-.114-.381.108-.64.214-.736.095-.087.433-.348.895-.149l15.185,8.928H6.438L2.032,2.958Zm1.229,18.954c-.472.228-.829-.044-.928-.134-.105-.097-.329-.355-.214-.737l4.324-8.041h11.898L3.261,21.912Z" fill="#0000FF"/>
@@ -1298,7 +1392,13 @@ export class chat extends HTMLElement {
                     </div>
                 </div>
                 
-                <div id="user-profile"></div>
+                <div id="user-profile">
+                    <div class="profile-info"></div>
+                    <div class="invite-game-container">
+                        invite game
+                    </div>
+                </div>
+
             </div>
         </div>
 

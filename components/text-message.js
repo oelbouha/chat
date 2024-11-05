@@ -24,7 +24,6 @@ userMessageTemplate.innerHTML = /*html*/ `
             flex-direction: row;
             justify-content: end;
             gap: 2px;
-            min-width: 80px;
         }
 
         .message-status-icon {
@@ -41,6 +40,7 @@ userMessageTemplate.innerHTML = /*html*/ `
             max-width: 80%;
             padding: 6px 7px 8px 9px;
             box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            gap: 4px;
         }
 
         .user-message {

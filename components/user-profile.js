@@ -69,6 +69,8 @@ export class profile extends HTMLElement {
             @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
         
         :host {
+            width: 100%;
+            height: 100%;
             display: block;
         }
             
@@ -115,7 +117,7 @@ export class profile extends HTMLElement {
         </div>
         
         <div class="profile-pic p-3">
-            <img class="user-image" src="/api/placeholder/50/50" alt="profile picture">
+            <img class="user-image" src="" alt="profile picture">
             <h4 class="user-name"></h4>
         </div>
         <div id="user-profile-info" class="p-3"></div>
