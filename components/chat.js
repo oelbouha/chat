@@ -771,7 +771,7 @@ export class chat extends HTMLElement {
             conversation.appendChild(UserMessageComponent);
         }
         else if (message.tp == "INVITE") {
-            const UserMessageComponent = document.createElement('wc-game-invite');
+            const UserMessageComponent = document.createElement('wc-profile-invite');
             UserMessageComponent.addMessage(message);
             UserMessageComponent.setAttribute("message-id",  message.identifier);
             if (message.msg)
@@ -779,8 +779,10 @@ export class chat extends HTMLElement {
             conversation.appendChild(UserMessageComponent);
 
             const userProfile = this.shadowRoot.querySelector("#user-profile")
-            console.log(userProfile)
-            userProfile.appendChild(UserMessageComponent)
+            const inviteGame = userProfile.querySelector(".invite-game-container")
+            inviteGame.innerHTML = ``
+            inviteGame.style["align-items"] = "center;"
+            inviteGame.appendChild(UserMessageComponent)
         }
         const usersContainer = this.shadowRoot.querySelector('.members-container');
         const userComponent = usersContainer.querySelector(`wc-chat-member[username="${this.activeMemberUsername}"]`);
@@ -1011,14 +1013,21 @@ export class chat extends HTMLElement {
             flex-direction: column;
         }
 
+        .profile-info {
+            width: 100%;
+        }
+        .invite-game-container {
+            width: 100%;
+        }
         #user-profile {
-            min-width: 400px;
+            min-width: 350px;
             display: flex;
             flex-direction: column;
             align-items: center;
             background-color: #f8f9fa;
             border-left: 1px solid #dee2e6;
             transition: width 0.3s ease;
+            gap: 8px;
         }
 
         .members-container {
@@ -1392,10 +1401,9 @@ export class chat extends HTMLElement {
                     </div>
                 </div>
                 
-                <div id="user-profile">
+                <div id="user-profile" class="p-3">
                     <div class="profile-info"></div>
                     <div class="invite-game-container">
-                        invite game
                     </div>
                 </div>
 

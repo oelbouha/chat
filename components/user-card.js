@@ -69,6 +69,7 @@ export class card extends HTMLElement {
             .body-container {
                 display: flex;
                 flex-direction: row;
+                gap: 3px;
             }
     
             .card-header {

@@ -8,6 +8,8 @@ import { imageMessage } from "./components/image-message.js";
 import { videoMessage } from "./components/video-message.js";
 import { gameInvite } from "./components/game-invite.js"
 import { gameRequest } from "./components/game-request.js"
+import { userProfileInvite } from "./components/user-profile-invite.js"
+
 
 
 
@@ -21,4 +23,5 @@ customElements.define("wc-image-message", imageMessage);
 customElements.define("wc-video-message", videoMessage);
 customElements.define("wc-game-invite", gameInvite);
 customElements.define("wc-game-request", gameRequest);
+customElements.define("wc-profile-invite", userProfileInvite);
 

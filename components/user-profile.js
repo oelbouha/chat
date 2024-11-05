@@ -77,7 +77,7 @@ export class profile extends HTMLElement {
         .profile-container {
             display: flex;
             flex-direction: column;
-            gap: 1em;
+            gap: 8px;
             height: 100%;
             width: 100%;
             overflow-y: auto;
@@ -111,16 +111,16 @@ export class profile extends HTMLElement {
         }
 
         </style>
-        <div class="profile-container p-4">
-        <div class="profile-header">
-            <h3 >Profile info</h3>
-        </div>
-        
-        <div class="profile-pic p-3">
-            <img class="user-image" src="" alt="profile picture">
-            <h4 class="user-name"></h4>
-        </div>
-        <div id="user-profile-info" class="p-3"></div>
+        <div class="profile-container">
+            <div class="profile-header">
+                <h3 >Profile info</h3>
+            </div>
+            
+            <div class="profile-pic p-3">
+                <img class="user-image" src="" alt="profile picture">
+                <h4 class="user-name"></h4>
+            </div>
+            <div id="user-profile-info" class="p-3"></div>
         </div>
         `
         )
