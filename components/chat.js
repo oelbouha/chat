@@ -44,9 +44,10 @@ export class chat extends HTMLElement {
         {
             "userName": "khalid",
             "id": "10",
-            "profilePic": "assets/after.png",
+            "profilePic": "assets/block-user.png",
             "unreadMessagesCount": "",
-            "lastMessage": ""
+            "lastMessage": "",
+            "blocked": "true"
         }, 
         ];
 
@@ -64,6 +65,8 @@ export class chat extends HTMLElement {
         this.overlayActive = false
         this.offcanvasActive = false
         this.inviteDropDownActive = false;
+
+        this.pendingGameInvite = false
         websocket.onmessage = (e) => {
             const message = JSON.parse(e.data);   
             if (message.m == "msg")
@@ -144,6 +147,15 @@ export class chat extends HTMLElement {
         profileComponent.addUserInfo(data)
 
         profileInfo.appendChild(profileComponent);
+        
+
+        const blockedContainer = this.shadowRoot.querySelector(".block-container")
+        if (this.activeMemberBlocked) {
+            blockedContainer.style.display = "flex"
+        }
+        else {
+            blockedContainer.style.display = "none"
+        }
     }
 
     async fetchData(userId, clientId) {
@@ -167,6 +179,10 @@ export class chat extends HTMLElement {
         if (clickedMember === this.activeMember) return 
 
         this.activeMember = clickedMember
+
+        const user = this.convo_list_users.find(user => user.id == clickedMember.id)
+        this.activeMemberBlocked = user.blocked == "true"
+
 
         this.activeMemberId = event.detail.id
         this.activeMemberUsername = event.detail.username
@@ -214,11 +230,8 @@ export class chat extends HTMLElement {
         this.addOffcanvasEventListener()
         this.uploadFilesEventListner()
 
-
         const returnIcon = this.shadowRoot.querySelector(".return-icon")
-        returnIcon.addEventListener('click', () => {
-            this.showMembersDivElement()
-        })
+        returnIcon.addEventListener('click', this.showMembersDivElement.bind(this))
 
         window.addEventListener('resize', () => {
             if (window.innerWidth > 800 && this.overlayActive) {
@@ -229,33 +242,96 @@ export class chat extends HTMLElement {
         })
 
         const inviteGame = this.shadowRoot.querySelector("#invite-game-icon")
-        inviteGame.addEventListener('click', () => {
-            console.log("clicked")
-            const dropdown = this.shadowRoot.querySelector('.dropdown-content')
-            if (this.inviteDropDownActive) {
-                dropdown.style.display = "none"
-                this.inviteDropDownActive = false
-            }
-            else {
-                dropdown.style.display = "flex"
-                this.inviteDropDownActive = true;
-            }
-        })
-        const pingPongTag = this.shadowRoot.querySelector("#ping-pong")
-        pingPongTag.addEventListener('click', ()=> {
-            const dropdown = this.shadowRoot.querySelector('.dropdown-content')
-            dropdown.style.display = "none"
-            const message = {
-                "m": "msg",
-                "clt": "1",
-                "cnt": "game request",
-                "tp": "INVITE",
-                "status": "sn",
-                "time": "4:30AM"
-            }
-            this.displayUserMessage(message)
+        inviteGame.addEventListener('click', this.handleInvitebtnClick.bind(this))
 
-        })
+        
+        const pingPongTag = this.shadowRoot.querySelector("#ping-pong")
+        pingPongTag.addEventListener('click', this.sendGameInvite.bind(this))
+        
+        const slapHandTag = this.shadowRoot.querySelector("#slap-hand")
+        slapHandTag.addEventListener('click', this.sendGameInvite.bind(this))
+        
+        const unblockBtn = this.shadowRoot.querySelector("#unblock-btn")
+        unblockBtn.addEventListener('click', this.handleUnblockBtn.bind(this))
+        
+    }
+    
+    handleUnblockBtn() {
+        console.log("unblock")
+    }
+
+    sendGameInvite(event) {
+        const dropdown = this.shadowRoot.querySelector('.dropdown-content')
+        const id = event.target.id
+        dropdown.style.display = "none"
+        if (this.pendingGameInvite) {
+            this.displayErrorMessage(`you have a pending request to ${this.activeMemberUsername}`)
+            return 
+        }
+        const message = {
+            "m": "msg",
+            "clt": "1",
+            "cnt": "game request",
+            "tp": "INVITE",
+            "status": "sn",
+            "time": "4:30AM",
+            "identifier": "1997"
+        }
+        let iconPath = "assets/ping-pong.svg"
+        if (id == "slap-hand")
+            iconPath = "assets/slap.svg"
+        this .addInviteGameMessage(message, "user", iconPath)
+        this.pendingGameInvite = true;
+
+        // const ele = this.shadowRoot.querySelector(".invite-game-container")
+        // const invite = ele.querySelector(`wc-profile-invite[message-id="1997"]`)
+        // invite.updateMessage("rejected")
+
+    }
+
+    handleInvitebtnClick() {
+        if (this.activeMemberBlocked) {
+            return this.displayErrorMessage(`Unblock ${this.activeMemberUsername} to send a message`)
+        }
+        const dropdown = this.shadowRoot.querySelector('.dropdown-content')
+        if (this.inviteDropDownActive) {
+            dropdown.style.display = "none"
+            this.inviteDropDownActive = false
+        }
+        else {
+            dropdown.style.display = "flex"
+            this.inviteDropDownActive = true;
+        }
+    }
+
+    displayErrorMessage(error) {
+        const chat = this.shadowRoot.querySelector("#chat-conversation")
+        const popUp = document.createElement('wc-popup-modal')
+        popUp.addMessage(error)
+        chat.appendChild(popUp)
+    }
+    addInviteGameMessage(message, user, iconPath) {
+        if (this.activeMemberBlocked) {
+            console.log("this member blocked")
+
+            // print on the screen a message to unblock this person to send a message
+            return
+        }
+        const userProfile = this.shadowRoot.querySelector("#user-profile")
+        const inviteGameDiv = userProfile.querySelector(".invite-game-container")
+        
+        const profileInviteComponent = document.createElement('wc-profile-invite');
+        profileInviteComponent.addMessage(user, iconPath);
+        profileInviteComponent.setAttribute("message-id",  message.identifier);
+        if (message.msg)
+            profileInviteComponent.setAttribute("message-id",  message.msg);
+        inviteGameDiv.innerHTML = ``
+        inviteGameDiv.appendChild(profileInviteComponent)
+    
+        const conversation = this.shadowRoot.querySelector("#chat-conversation")
+        const messageComponent = document.createElement('wc-game-request');
+        messageComponent.addMessage(message)
+        conversation.appendChild(messageComponent)
     }
 
     async uploadImageFile(file) {
@@ -331,7 +407,12 @@ export class chat extends HTMLElement {
     }
 
    async uploadFilesEventListner() {
-        this.shadowRoot.querySelector('.add-file-icon').addEventListener('click' , () => {
+       this.shadowRoot.querySelector('.add-file-icon').addEventListener('click' , (event) => {
+            if (this.activeMemberBlocked) {
+                this.displayErrorMessage(`Unblock ${this.activeMemberUsername} to send a message`)
+                event.preventDefault()
+                return 
+            }
             const fileInput = this.shadowRoot.querySelector('#files')
             fileInput.addEventListener('change', (event) => {
                 const selectedFile = event.target.files[0]
@@ -347,7 +428,6 @@ export class chat extends HTMLElement {
                 fileInput.value = ""
             })
         })
-
     }
 
     async handleVideoFile(videoFile) {
@@ -770,20 +850,6 @@ export class chat extends HTMLElement {
                 UserMessageComponent.setAttribute("message-id",  message.msg);
             conversation.appendChild(UserMessageComponent);
         }
-        else if (message.tp == "INVITE") {
-            const UserMessageComponent = document.createElement('wc-profile-invite');
-            UserMessageComponent.addMessage(message);
-            UserMessageComponent.setAttribute("message-id",  message.identifier);
-            if (message.msg)
-                UserMessageComponent.setAttribute("message-id",  message.msg);
-            conversation.appendChild(UserMessageComponent);
-
-            const userProfile = this.shadowRoot.querySelector("#user-profile")
-            const inviteGame = userProfile.querySelector(".invite-game-container")
-            inviteGame.innerHTML = ``
-            inviteGame.style["align-items"] = "center;"
-            inviteGame.appendChild(UserMessageComponent)
-        }
         const usersContainer = this.shadowRoot.querySelector('.members-container');
         const userComponent = usersContainer.querySelector(`wc-chat-member[username="${this.activeMemberUsername}"]`);
         if (!userComponent) {
@@ -801,6 +867,9 @@ export class chat extends HTMLElement {
         input.focus();
 
         if (message) {
+            if (this.activeMemberBlocked) {
+                return this.displayErrorMessage(`Unblock ${this.activeMemberUsername} to send a message`)
+            }
             this.identifier = getTimestamp()
             const response = {
                 "m": "msg",
@@ -967,16 +1036,20 @@ export class chat extends HTMLElement {
                 const messages = this.databaseMessages.get(user.id)
                 if (!messages || messages.length == 0) {
                     // console.warn(`no messages data found for user : ${JSON.stringify(user)}`)
-                    return 
+                    if (user.blocked == "true")
+                        member.updateLastMessage("You blocked this user")
+                    return
                 }
 
                 const unreadMessagesCount = this.getUnreadMessagesCount(user.id)
                 const lastMessage = messages.at(-1)
                 user.unreadMessagesCount = unreadMessagesCount
                 user.lastMessage = lastMessage
+                if (user.blocked == "true")
+                    user.lastMessage = "You blocked this user"
 
                 member.displayMessageCounter(unreadMessagesCount, lastMessage)
-                member.updateLastMessage(lastMessage)
+                member.updateLastMessage(user.lastMessage)
             }
         }))
     }
@@ -1248,14 +1321,20 @@ export class chat extends HTMLElement {
 /*  drop down content */
 
     .dropdown-content {
-      display: none;
-      position: absolute;
-      background-color: #022f40;
-      min-width: 160px;
-      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-      flex-direction: column;
-      z-index: 15;
-      top: -585%;
+        display: none;
+        position: absolute;
+        background-color: #022f40;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        flex-direction: column;
+        z-index: 15;
+        border-radius: 12.5px;
+        border-bottom-left-radius: 12.5px;
+        border: 1px solid #712cf9;
+        top: -637%;
+        border-bottom-left-radius: 0px;
+        left: 40%;
+        transition: all 0.3s ease-in-out;
     }
     
     .dropdown-content dt:hover {
@@ -1264,17 +1343,34 @@ export class chat extends HTMLElement {
         cursor: pointer;
     }
     .dropdown-content dt {
-      color: white;
-      padding: 12px 16px;
-      text-decoration: none;
-      display: block;
+        color: white;
+        font-size: 14px;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
     }
     .dropdown-content h5 {
-      color: white;
-      padding: 10px 10px;
-      display: block;
+        border-top-right-radius: 7.5px;
+        border-top-left-radius: 7.5px;
+        color: white;
+        padding: 10px 10px;
+        display: block;
+        background: #712cf9;
     }
 
+    .block-container {
+        background: #022f40;
+        width: 100%;
+        color: white;
+        padding: 10px;
+        border-radius: 7.5px;
+        padding-right: 10px;
+        display: none;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        justify-content: space-evenly;
+    }
 
         /* break points */
         @media (max-width: 1200px) {
@@ -1403,7 +1499,10 @@ export class chat extends HTMLElement {
                 
                 <div id="user-profile" class="p-3">
                     <div class="profile-info"></div>
-                    <div class="invite-game-container">
+                    <div class="invite-game-container"></div>
+                    <div class="block-container">
+                        you blocked this Contact
+                        <button id="unblock-btn" class="btn btn-danger"> unblock </button>
                     </div>
                 </div>
 

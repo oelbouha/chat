@@ -67,6 +67,11 @@ export class chatMember extends HTMLElement {
     updateLastMessage(message) {
         if (!message) return
 
+        if (message == "You blocked this user") {
+            const lastMessageTag = this.shadowRoot.querySelector("#msg-content");
+            lastMessageTag.textContent = "You blocked this user"
+            return 
+        }
         this.lastMessage = message
 
         const messageSts = this.shadowRoot.querySelector('.message-status-icon');

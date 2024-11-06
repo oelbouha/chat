@@ -9,8 +9,8 @@ import { videoMessage } from "./components/video-message.js";
 import { gameInvite } from "./components/game-invite.js"
 import { gameRequest } from "./components/game-request.js"
 import { userProfileInvite } from "./components/user-profile-invite.js"
-
-
+import { popUpModal } from "./components/popup-modal.js"
+import { messageDate } from "./components/message-date.js"
 
 
 
@@ -24,4 +24,6 @@ customElements.define("wc-video-message", videoMessage);
 customElements.define("wc-game-invite", gameInvite);
 customElements.define("wc-game-request", gameRequest);
 customElements.define("wc-profile-invite", userProfileInvite);
+customElements.define("wc-popup-modal", popUpModal);
+customElements.define("wc-message-date", messageDate);
 

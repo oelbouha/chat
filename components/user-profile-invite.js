@@ -10,8 +10,7 @@ export class userProfileInvite extends HTMLElement {
 		this.shadowRoot.appendChild(this.container);
 
 		this.messageData = {
-            "status": "",
-            "time" : "",
+            "icon" : "",
             "type": "",
 		}
 	}
@@ -49,11 +48,9 @@ export class userProfileInvite extends HTMLElement {
 		}
 	}
 
-	addMessage(message, type="user") {
-		if (!message) return 
-		if (message.status) this.messageData.status = message.status
-		if (message.time) this.messageData.time = message.time
+	addMessage(type="user", icon="assets/slap.svg") {
 		this.messageData.type = type
+		this.messageData.icon = icon
 		this.render()
 	}
 
@@ -65,16 +62,34 @@ export class userProfileInvite extends HTMLElement {
         return "assets/not-send.svg"
     }
 
-    updateMessage(message) {
-        if (message.status) this.messageData.status = message.status
-        this.render()
+    updateMessage(result) {
+		const btnContainer = this.shadowRoot.querySelector('.btn-container');
+		const spinner = this.shadowRoot.querySelector('.spinner-container');
+
+		spinner.style.display = "none"
+		btnContainer.style.display = "none"
+
+		if (result == "rejected") {
+			const rejected = this.shadowRoot.querySelector("#rejected-icon")
+			rejected.style.display = "block"
+		}
+		else {
+			const play = this.shadowRoot.querySelector("#play-btn")
+			play.style.display = "block"
+		}
+
     }
     
     render() {
-        const messageSts = this.shadowRoot.querySelector('.message-status-icon');
-        const messageTime = this.shadowRoot.querySelector('.message-time');
-
-
+        const btnContainer = this.shadowRoot.querySelector('.btn-container');
+        const spinner = this.shadowRoot.querySelector('.spinner-container');
+		
+		if (this.messageData.type == "client" && btnContainer) {
+			btnContainer.style.display= "flex"
+			spinner.style.display= "none"
+		}
+		const gameIcon = this.shadowRoot.querySelector('#game-icon');
+		gameIcon.src = this.messageData.icon
     }
 
 	html() {
@@ -98,10 +113,9 @@ export class userProfileInvite extends HTMLElement {
 				flex-direction: column;
 				justify-content: center;
 				align-items: center;
-				font-style: oblique;
   				font-size: 18px;
 				width: 100%;
-				border-radius: 7.5px;
+				border-radius: 14px;
 				box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
 			}
 			#remote-game-icon, #game-icon {
@@ -122,8 +136,7 @@ export class userProfileInvite extends HTMLElement {
 			.invite-container {
 				display: flex;
 				flex-direction: row;
-				align-items: center;
-				justify-content: center;
+				justify-content: space-between;
 				gap: 10px;
 			}
 			
@@ -137,6 +150,16 @@ export class userProfileInvite extends HTMLElement {
 				flex-direction: column;
 				justify-content: center;
 				align-items: center;
+			}
+			#play-btn {
+				display: none;
+				height: 50px;
+				width: 100px;
+				align-self: center;
+			}
+			#rejected-icon {
+				display: none;
+				width: 110px;
 			}
 
 		</style>
@@ -157,6 +180,8 @@ export class userProfileInvite extends HTMLElement {
 							waiting for approval
 							<img id="spinner-icon" src="assets/spinner.svg"/>
 						</div>
+						<button id="play-btn" class="btn btn-success"> Play </button>
+						<img id="rejected-icon" src="assets/rejected.svg" />
 					</div>
 					
 				</div>

@@ -60,7 +60,6 @@ export class gameRequest extends HTMLElement {
         }
     }
 
-
 	html() {
 		return (
 		/*html*/
@@ -127,7 +126,7 @@ export class gameRequest extends HTMLElement {
 					<div class="invite-message-image-container">
 						<img id="icon-image" src="assets/game-icon.svg" />
 					</div>
-					<div class="invite-message">Game Request</div>
+					<div class="invite-message">Game Invite</div>
 					<div id="msg-status-container" >
 						<div class="message-time">10:30AM</div>
 						<div class="message-status">
