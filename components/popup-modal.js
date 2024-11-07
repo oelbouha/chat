@@ -24,15 +24,23 @@ export class popUpModal extends HTMLElement {
 		const body = this.shadowRoot.querySelector(".body-content")
 		body.textContent = content
 	}
+
+
 	connectedCallback() {
         const closeBtn = this.shadowRoot.querySelector('.close-btn');
 		if (closeBtn)
-		closeBtn.addEventListener('click', this.handleClick)
+			closeBtn.addEventListener('click', this.handleClick)
+		const overlay = this.shadowRoot.querySelector('#overlay');
+		if (overlay)
+			overlay.addEventListener('click', this.handleClick.bind(this));
 	}
 	disconnectedCallback() {
 		const closeBtn = this.shadowRoot.querySelector('.close-btn');
 		if (closeBtn)
 			closeBtn.removeEventListener('click', this.handleClick)
+		const overlay = this.shadowRoot.querySelector('#overlay');
+		if (overlay)
+			overlay.removeEventListener('click', this.handleClick.bind(this));
     }
 
 	html() {

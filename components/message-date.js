@@ -10,7 +10,7 @@ export class messageDate extends HTMLElement {
 
 	}
 
-	addMessage(date) {
+	addMessageDate(date) {
 		const body = this.shadowRoot.querySelector(".date")
 		if (body)
 			body.textContent = date
@@ -34,20 +34,21 @@ export class messageDate extends HTMLElement {
 						flex-direction: row;
 						justify-content: center;
 						align-items: center;
-						gap: 8px;
-					}
-					#left , .right{
-						flex-grow: 1;
+						margin-bottom: 4px;
+						
 					}
 					.date {
-						font-size: 14px;
+						font-size: 12px;
+						background: #022f40;
+						padding: 3px 14px;
+						border-radius: 7.5px;
+						color: white;
+						box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
 					}
 				</style>
 
 				<div class="date-container">
-					<div id="left"> <hr> </div>
 					<div class="date"> November 15, 2024 </div>
-					<div class="right"> <hr> </div>
 				</div>
 			`
 		)

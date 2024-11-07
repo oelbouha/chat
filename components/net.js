@@ -46,6 +46,29 @@ export function getCurrentTime() {
 }
 
 
+export function formatDate(date) {
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - (24 * 60 * 60 * 1000));
+    const d = new Date(date);
+
+    // Check if date is today
+    if (d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()) {
+        return "Today";
+    }
+    // Check if date is yesterday
+    else if (d.getDate() === yesterday.getDate() && d.getMonth() === yesterday.getMonth() && d.getFullYear() === yesterday.getFullYear()) {
+        return "Yesterday";
+    }
+    else {
+        const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    }
+}
+
+
 export function formatTime(time, format = '12-hour') {
     // Check if the input is already in 12-hour format (HH:mm AM/PM)
     const twelveHourRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9]) (AM|PM)$/;

@@ -172,16 +172,19 @@ export class chatMember extends HTMLElement {
             @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
         
             :host {
+                width: 100%;
+                height: 100%;
                 display: block;
                 margin-bottom: 10px;
             }
             .member {
                 display: flex;
+                background: #f8f9fa;
                 flex-direction: row;
                 alignitems: center;
                 padding: 1em;
                 cursor: pointer;
-                border-bottom: 1px solid #e9ecef;
+                border-bottom: 1.5px solid #e9ecef;
                 border-radius: 4px;
             }
             .member:hover, .member.active {

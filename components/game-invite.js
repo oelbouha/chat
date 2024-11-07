@@ -121,6 +121,7 @@ export class gameInvite extends HTMLElement {
 				display: flex;
 				flex-direction: column;
 				margin-bottom: 4px;
+				transition: all 0.3s ease;
 			}
 			.invite-icon-container {
 				display: flex;

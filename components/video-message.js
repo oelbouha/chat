@@ -309,8 +309,6 @@ export class videoMessage extends HTMLElement {
 
             const videoImagePreview = this.shadowRoot.querySelector("#img-prev-src")
             if (this.videoData.prev_file && this.videoData.msg_id) {
-                console.log("adding image")
-
                 videoImagePreview.src = `http://127.0.0.1:8000/message/${this.videoData.msg_id}/preview/`
                 this.hasRendred = true
             }

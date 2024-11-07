@@ -1,5 +1,5 @@
 import { websocket } from "./net.js";
-import { getData, formatTime, getCurrentTime, replaceChar } from "./net.js"
+import { getData, formatTime, getCurrentTime, replaceChar, formatDate } from "./net.js"
 import { getVideoThumbnail } from "../video_thumbnail.js"
 
 let typingTimer;
@@ -62,26 +62,27 @@ export class chat extends HTMLElement {
         this.username = "outman"
         this.userId = 1
 
-        this.overlayActive = false
-        this.offcanvasActive = false
         this.inviteDropDownActive = false;
 
         this.pendingGameInvite = false
+
+        this.lastDate = null
+
         websocket.onmessage = (e) => {
             const message = JSON.parse(e.data);   
             if (message.m == "msg")
                 this.handleIncomingMessage(message)
             else if (message.m == "st" || message.m == "sn" || message.m == "recv")
                 this.handleMessageStatus(message)
-            else if (message.m == "typ")
-                this.handleTyping(message)
-            else if (message.m == "styp")
+            else if (message.m == "typ" || message.m == "styp")
                 this.handleTyping(message)
         }
                 
         this.identifier = 0
+        
         this.clientsMessages = new Map()
         this.databaseMessages = new Map()
+        this.gameInvitaion = new Map()
         
         this.render();
         this.updateUnreadMemberMessages()
@@ -145,9 +146,16 @@ export class chat extends HTMLElement {
             "description": "this is description ..."
         }
         profileComponent.addUserInfo(data)
-
         profileInfo.appendChild(profileComponent);
         
+        // for invite game request
+        const inviteContainer = this.shadowRoot.querySelector(".invite-game-container")
+
+        inviteContainer.innerHTML = ``
+        const comp = this.gameInvitaion.get(Number(this.activeMemberId))
+        if (comp) {
+            inviteContainer.appendChild(comp)
+        }
 
         const blockedContainer = this.shadowRoot.querySelector(".block-container")
         if (this.activeMemberBlocked) {
@@ -224,7 +232,7 @@ export class chat extends HTMLElement {
         mainSearch.addEventListener('input', this.handleUserSearch.bind(this));
 
         const profileIcon = this.shadowRoot.querySelector('.profile-icon');
-        profileIcon.addEventListener('click', this.handleProfileOffCanvas.bind(this));
+        profileIcon.addEventListener('click', this.showUserProfile.bind(this));
 
         this.addMessageEventListener()
         this.addOffcanvasEventListener()
@@ -234,11 +242,9 @@ export class chat extends HTMLElement {
         returnIcon.addEventListener('click', this.showMembersDivElement.bind(this))
 
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 800 && this.overlayActive) {
-                this.hideOverlay()
+            if (window.innerWidth > 800) {
+                this.handleOverlayClick();
             }
-            else if (this.offcanvasActive)
-                this.showOverlay()
         })
 
         const inviteGame = this.shadowRoot.querySelector("#invite-game-icon")
@@ -270,13 +276,14 @@ export class chat extends HTMLElement {
         }
         const message = {
             "m": "msg",
-            "clt": "1",
-            "cnt": "game request",
+            "clt": this.activeMemberId,
+            "cnt": "game invite",
             "tp": "INVITE",
-            "status": "sn",
-            "time": "4:30AM",
-            "identifier": "1997"
+            "status": "pending",
+            "time": getCurrentTime(),
+            "identifier": this.activeMemberUsername + getTimestamp()
         }
+        websocket.send(JSON.stringify(message));
         let iconPath = "assets/ping-pong.svg"
         if (id == "slap-hand")
             iconPath = "assets/slap.svg"
@@ -311,27 +318,19 @@ export class chat extends HTMLElement {
         chat.appendChild(popUp)
     }
     addInviteGameMessage(message, user, iconPath) {
-        if (this.activeMemberBlocked) {
-            console.log("this member blocked")
-
-            // print on the screen a message to unblock this person to send a message
-            return
-        }
         const userProfile = this.shadowRoot.querySelector("#user-profile")
-        const inviteGameDiv = userProfile.querySelector(".invite-game-container")
-        
+        const inviteGameContainer = userProfile.querySelector(".invite-game-container")
+
         const profileInviteComponent = document.createElement('wc-profile-invite');
         profileInviteComponent.addMessage(user, iconPath);
         profileInviteComponent.setAttribute("message-id",  message.identifier);
         if (message.msg)
             profileInviteComponent.setAttribute("message-id",  message.msg);
-        inviteGameDiv.innerHTML = ``
-        inviteGameDiv.appendChild(profileInviteComponent)
+        inviteGameContainer.innerHTML = ``
+        inviteGameContainer.appendChild(profileInviteComponent)
+        this.gameInvitaion.set(Number(this.activeMemberId), profileInviteComponent)
     
-        const conversation = this.shadowRoot.querySelector("#chat-conversation")
-        const messageComponent = document.createElement('wc-game-request');
-        messageComponent.addMessage(message)
-        conversation.appendChild(messageComponent)
+        this.displayUserMessage(message)
     }
 
     async uploadImageFile(file) {
@@ -384,9 +383,6 @@ export class chat extends HTMLElement {
         }
         websocket.send(JSON.stringify(message));
         this.displayUserMessage(message)
-        message["sender"] = this.userId
-        message["recipient"] = this.activeMemberId
-        this.storeMessage(this.activeMemberId, message)
     }
 
     sendImageMessage(imageFiles) {
@@ -401,9 +397,6 @@ export class chat extends HTMLElement {
         }
         websocket.send(JSON.stringify(message));
         this.displayUserMessage(message)
-        message["sender"] = this.userId
-        message["recipient"] = this.activeMemberId
-        this.storeMessage(this.activeMemberId, message)
     }
 
    async uploadFilesEventListner() {
@@ -414,6 +407,7 @@ export class chat extends HTMLElement {
                 return 
             }
             const fileInput = this.shadowRoot.querySelector('#files')
+            console.log(fileInput)
             fileInput.addEventListener('change', (event) => {
                 const selectedFile = event.target.files[0]
                 if (selectedFile) {
@@ -440,10 +434,6 @@ export class chat extends HTMLElement {
     }
 
     addOffcanvasEventListener() {
-        const profileOffcanvasCloseBtn = this.shadowRoot.querySelector('#profileOffcanvasCloseBtn');
-        if (profileOffcanvasCloseBtn)
-            profileOffcanvasCloseBtn.addEventListener('click', this.handleProfileCloseOffcanvas.bind(this));
-        
         const listOffcanvas = this.shadowRoot.querySelector('.list-icon');
         if (listOffcanvas)
             listOffcanvas.addEventListener('click', this.showMembersDivElement.bind(this));
@@ -528,6 +518,11 @@ export class chat extends HTMLElement {
             const videoComponent = document.createElement('wc-video-message')
             videoComponent.addMessage(message.cnt, message, "client")
             conversation.appendChild(videoComponent)
+        }
+        else if (message.tp == "INVITE") {
+            const inviteComponent = document.createElement('wc-game-request')
+            inviteComponent.addMessage(message, "client")
+            conversation.appendChild(inviteComponent)
         }
     }
 
@@ -673,6 +668,10 @@ export class chat extends HTMLElement {
             identifierAttribute = `wc-video-message[message-id="${messageToUpdate.identifier}"]`
             idAttribute = `wc-video-message[message-id="${messageToUpdate.msg}"]`
         }
+        else if (messageToUpdate.tp == "INVITE") {
+            identifierAttribute = `wc-game-invite[message-id="${messageToUpdate.identifier}"]`
+            idAttribute = `wc-game-invite[message-id="${messageToUpdate.msg}"]`
+        }
         messageComponent = conversation.querySelector(`${identifierAttribute}`)
         if (!messageComponent)
             messageComponent = conversation.querySelector(`${idAttribute}`)
@@ -736,8 +735,25 @@ export class chat extends HTMLElement {
         videoComponent.setAttribute("message-id",  message.identifier);
         if(message.msg)
             videoComponent.setAttribute("message-id",  message.msg);
-
+        
         conversation.appendChild(videoComponent)
+    }
+    renderInviteMessage(message) {
+        const conversation = this.shadowRoot.querySelector("#chat-conversation")
+        if (!conversation) return
+        
+        const messageComponent = document.createElement('wc-game-request');
+        if (message.sender == this.activeMemberId) {
+            messageComponent.addMessage(message, "client")
+        }
+        else {
+            messageComponent.addMessage(message)
+        }
+        messageComponent.setAttribute("message-id",  message.identifier)
+        if(message.msg)
+            messageComponent.setAttribute("message-id",  message.msg)
+
+        conversation.appendChild(messageComponent)
     }
     renderImageMessage(message) {
         const conversation = this.shadowRoot.querySelector('#chat-conversation');
@@ -773,6 +789,17 @@ export class chat extends HTMLElement {
         return false
     }
 
+    renderMessageDate(date) {
+        if (date == this.lastDate || date == "undefined NaN, NaN")
+            return 
+        const conversation = this.shadowRoot.querySelector('#chat-conversation');
+        if (!conversation) return 
+
+        const dateComponent = document.createElement('wc-message-date')
+        dateComponent.addMessageDate(date)
+        this.lastDate = date
+        conversation.appendChild(dateComponent)
+    }
     renderClientMessages(messages) {
         if (!messages) return 
         
@@ -789,9 +816,13 @@ export class chat extends HTMLElement {
             else if (message.tp == "VD") {
                 this.renderVideoMessage(message)
             }
+            else if (message.tp == "INVITE") {
+               this.renderInviteMessage(message)
+            }
             if (message.sender == this.activeMemberId && !this.isMessageSeen(message.status)) {
                 this.markeAsRead(message)
             }
+            this.renderMessageDate(formatDate(message.time))
     });
 }
     renderActiveUserMessages() {
@@ -823,33 +854,7 @@ export class chat extends HTMLElement {
         this.updateScroll()
     }
 
-    displayUserMessage(message) {
-        const conversation = this.shadowRoot.querySelector('#chat-conversation');
-
-        if (message.tp == "TXT") {
-            const UserMessageComponent = document.createElement('wc-text-message');
-            UserMessageComponent.addMessage(message);
-            UserMessageComponent.setAttribute("message-id",  message.identifier);
-            if (message.msg)
-                UserMessageComponent.setAttribute("message-id",  message.msg);
-            conversation.appendChild(UserMessageComponent);
-        }
-        else if (message.tp == "IMG") {
-            const UserMessageComponent = document.createElement('wc-image-message');
-            UserMessageComponent.addMessage(JSON.parse(message.cnt), message);
-            UserMessageComponent.setAttribute("message-id",  message.identifier);
-            if (message.msg)
-                UserMessageComponent.setAttribute("message-id",  message.msg);
-            conversation.appendChild(UserMessageComponent);
-        }
-        else if (message.tp == "VD") {
-            const UserMessageComponent = document.createElement('wc-video-message');
-            UserMessageComponent.addMessage(JSON.parse(message.cnt), message.time, message.status);
-            UserMessageComponent.setAttribute("message-id",  message.identifier);
-            if (message.msg)
-                UserMessageComponent.setAttribute("message-id",  message.msg);
-            conversation.appendChild(UserMessageComponent);
-        }
+    updateMemberLastMessage(message) {
         const usersContainer = this.shadowRoot.querySelector('.members-container');
         const userComponent = usersContainer.querySelector(`wc-chat-member[username="${this.activeMemberUsername}"]`);
         if (!userComponent) {
@@ -857,6 +862,25 @@ export class chat extends HTMLElement {
             return 
         }
         userComponent.updateLastMessage(message)
+    }
+    displayUserMessage(message) {
+        if (message.tp == "TXT") {
+            this.renderTextMessage(message)
+        }
+        else if (message.tp == "IMG") {
+            this.renderImageMessage(message)
+        }
+        else if (message.tp == "VD") {
+            this.renderVideoMessage(message)
+        }
+        else if (message.tp == "INVITE") {
+            this.renderInviteMessage(message)
+        }
+        this.updateMemberLastMessage(message)
+        
+        message["sender"] = this.userId
+        message["recipient"] = this.activeMemberId
+        this.storeMessage(this.activeMemberId, message)
     }
 
     sendMessage(event) {
@@ -870,21 +894,17 @@ export class chat extends HTMLElement {
             if (this.activeMemberBlocked) {
                 return this.displayErrorMessage(`Unblock ${this.activeMemberUsername} to send a message`)
             }
-            this.identifier = getTimestamp()
             const response = {
                 "m": "msg",
                 "clt": this.activeMemberId, // client id
                 "tp": "TXT",
-                "identifier": this.username + this.identifier,
+                "identifier": this.username + getTimestamp(),
                 "cnt": message,
                 "status": "pending",
                 "time": getCurrentTime()
             }
             websocket.send(JSON.stringify(response));
             this.displayUserMessage(response)
-            response["sender"] = this.userId
-            response["recipient"] = this.activeMemberId
-            this.storeMessage(this.activeMemberId, response)
             this.updateScroll();
         }
     }
@@ -924,27 +944,8 @@ export class chat extends HTMLElement {
         const offcanvas = this.shadowRoot.querySelector("#convo-list");
         offcanvas.style["left"] = "0";
         this.showOverlay();
-        this.overlayActive = true;
-        this.offcanvasActive = true;
     }
-    
-    handleOffcanvasSearch(event) {
-        // need to be fixed ;
-        const searchQuery = event.target.value.toLowerCase();
-        // console.log("search ::", searchQuery);
 
-        const membersContainer = this.shadowRoot.querySelector('#list-offcanvas-body');
-        const members = membersContainer.querySelectorAll('wc-chat-member');
-    
-        members.forEach(member => {
-            const username = member.getAttribute('username').toLowerCase();
-            if (username.includes(searchQuery)) {
-                member.style.display = '';
-            } else {
-                member.style.display = 'none';
-            }
-        });
-    }
 
     handleProfileCloseOffcanvas(event) {
         const offcanvas = this.shadowRoot.querySelector('#profileOffcanvas');
@@ -955,31 +956,18 @@ export class chat extends HTMLElement {
     hideMembersDivElement(event) {
         const element = this.shadowRoot.querySelector('#convo-list');
         element.style["left"] = "-200%"
-        this.overlayActive = false
-        this.offcanvasActive = false
         this.hideOverlay();
     }
 
-    handleProfileOffCanvas(event) {
-        const username = this.convo_list_users[1];
-		const profilePic = "assets/after.png";
+    hideProfile(event) {
+        const element = this.shadowRoot.querySelector('#user-profile');
+        element.style["right"] = "-200%"
+        this.hideOverlay();
+    }
 
-        // console.log(username);
-        const cprofileOffcanvasBody = this.shadowRoot.querySelector('.custom-offcanvas-body');
-        cprofileOffcanvasBody.innerHTML = ``;
-
-        const profileComponent = document.createElement('wc-chat-profile');
-        const data = {
-            "name": this.activeMemberUsername,
-            "profilePic": profilePic,
-            "phoneNumber": "0639316995",
-            "description": "this is description ..."
-        }
-        profileComponent.addUserInfo(data)
-        cprofileOffcanvasBody.appendChild(profileComponent)
-
-        const profileOffcanvas = this.shadowRoot.querySelector('#profileOffcanvas');
-        profileOffcanvas.classList.add('show');
+    showUserProfile(event) {
+        const userProfile = this.shadowRoot.querySelector('#user-profile');
+        userProfile.style["right"] = "0"
         this.showOverlay();
     }
 
@@ -992,7 +980,7 @@ export class chat extends HTMLElement {
         overlay.classList.remove('show');
     }
     handleOverlayClick() {
-        this.handleProfileCloseOffcanvas();
+        this.hideProfile();
         this.hideMembersDivElement();
     }
 
@@ -1061,24 +1049,51 @@ export class chat extends HTMLElement {
         @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
 
         :host {
-            display: block;
+            background: green;
             height: 100%;
-            width: 100%;
+            width:  100%;
         }
 
         .chat-container {
+            border: 2px solid black;
             height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
         }
 
         #convo-list {
             min-width: 400px;
+            max-height: 100%;
             background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
             border-right: 1px solid #b8adae;
             transition: width 0.3s ease;
         }
 
+        .members-container {
+            overflow: auto;
+            box-sizing: border-box;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            height: 50px;
+            color: #385a64;
+        }
+        .search-container {
+            position: relative;
+            color: white;
+            margin-bottom: 20px;
+            display: flex;
+        }
+
 
         #convo-messages-container {
+            height: 100%;
             background-color: #e0e0e0;
             flex-grow: 1;
             transition: width 0.3s ease;
@@ -1086,12 +1101,30 @@ export class chat extends HTMLElement {
             flex-direction: column;
         }
 
-        .profile-info {
-            width: 100%;
+        #chat-conversation {
+            flex: 1 1 auto;
+            background-color: #e0e0e0;
+            overflow: auto;
         }
-        .invite-game-container {
-            width: 100%;
+
+        #input-message-container {
+            flex: 0 0 auto;
+            display: none;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            padding: 0.5em;
+            box-sizing: border-box;
         }
+        #user-header-container {
+            width: 100%;
+            flex: 0 0 auto;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: row;
+        }
+
         #user-profile {
             min-width: 350px;
             display: flex;
@@ -1100,20 +1133,17 @@ export class chat extends HTMLElement {
             background-color: #f8f9fa;
             border-left: 1px solid #dee2e6;
             transition: width 0.3s ease;
+            overflow: auto;
             gap: 8px;
         }
 
-        .members-container {
-            overflow-y: auto;
-            max-height: calc(100vh - 120px);
+        .profile-info {
+            width: 100%;
+        }
+        .invite-game-container {
+            width: 100%;
         }
 
-        .search-container {
-            position: relative;
-            color: white;
-            margin-bottom: 20px;
-            display: flex;
-        }
 
         .search-icon {
             position: absolute;
@@ -1141,12 +1171,7 @@ export class chat extends HTMLElement {
             width: 100%;
         }
 
-        #user-header-container {
-            width: 100%;
-            background-color: #f8f9fa;
-            display: flex;
-            flex-direction: row;
-        }
+
 
         .member {
             width: 100%;
@@ -1170,7 +1195,6 @@ export class chat extends HTMLElement {
         #user-image {
             width: 100%;
             height: 100%;
-
             object-fit: cover;
         }
         .convo-username {
@@ -1192,37 +1216,8 @@ export class chat extends HTMLElement {
         }
 
         /* profile offcanvas */ 
-            .profileOffcanvas {
-                position: fixed;
-                top: 0;
-                right: -200%;
-                height: 100%;
-                background-color: #fff;
-                transition: right 0.3s ease-in-out;
-                z-index: 1000;
-                box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-            }
-
-            .profileOffcanvas.show {
-                right: 0;
-            }
-
-            .profile-offcanvas-header {
-                padding: 1rem;
-                border-bottom: 1px solid #dee2e6;
-            }
 
 
-            #profileOffcanvas {
-                overflow-y: auto;
-            }
-
-            #chat-conversation {
-                width: 100%;
-                height: 100%;
-                background-color: #e0e0e0;
-                overflow-y: auto;
-            }
             #conversation-background {
                 object-fit: contain;
                 width: 100%;
@@ -1250,15 +1245,7 @@ export class chat extends HTMLElement {
 
 
             /* input message */
-            #input-message-container {
-                display: none;
-                flex-direction: row;
-                align-items: center;
-                justify-content: center;
-                background-color: #f8f9fa;
-                padding: 0.5em;
-                box-sizing: border-box;
-            }
+
             
             #message-input {
                 flex-grow: 1;
@@ -1305,9 +1292,6 @@ export class chat extends HTMLElement {
                 display: none;
             }
 
-            .chat-header {
-                color: #385a64;
-            }
             .return-icon-container {
                 display: none;
             }
@@ -1372,10 +1356,19 @@ export class chat extends HTMLElement {
         justify-content: space-evenly;
     }
 
+    .invite-game-container {
+        transition: all 0.3s ease;
+    }
         /* break points */
         @media (max-width: 1200px) {
             #user-profile {
-                display: none !important;
+                position: fixed;
+                top: 0;
+                right: -200%;
+                height: 100%;
+                transition: right 0.3s ease-in-out;
+                z-index: 20000;
+                box-shadow: -2px 0 5px rgba(0,0,0,0.1);
             }
             .profile-icon-container .profile-icon {
                 display: initial !important;
@@ -1391,7 +1384,6 @@ export class chat extends HTMLElement {
                 top: 0;
                 left: -200%;
                 height: 100%;
-                background-color: #fff;
                 transition: right 0.3s ease-in-out;
                 z-index: 20000;
                 box-shadow: -2px 0 5px rgba(0,0,0,0.1);
@@ -1421,19 +1413,17 @@ export class chat extends HTMLElement {
     </style>
 
     <body>
-        <div class="chat-container position-relative">
-            
-            <div class="d-flex h-100 position-relative">
-            <div id="convo-list" class="p-3">
-                    <h4 class="chat-header mb-3">Chats</h5>
-                    <div class="search-container">
-                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <input type="search" id="convo-search"  placeholder="Search">
-                    </div>
-                    <div class="members-container"></div>
+        <div class="chat-container">
+            <div id="convo-list" class="p-2">
+                <h4 class="chat-header mb-3">Chats</h5>
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <input type="search" id="convo-search"  placeholder="Search">
                 </div>
+                <div class="members-container"></div>
+            </div>
 
                 <div id="convo-messages-container">
                     <div id="user-header-container">
@@ -1460,7 +1450,7 @@ export class chat extends HTMLElement {
 
                     <div id="chat-conversation" class="p-3" class="position-relative">
                         
-                        <img id="conversation-background" src="assets/conversation.png" />
+                        <img id="conversation-background" src="assets/back.svg" />
                         <div class="return-icon-container">
                             <svg class="return-icon" xmlns="http://www.w3.org/2000/svg" id="Bold" viewBox="0 0 24 24" width="512" height="512"><path d="M12,24a1.493,1.493,0,0,1-1.06-.439L3.264,15.889a5.5,5.5,0,0,1,0-7.778L10.936.439a1.5,1.5,0,1,1,2.121,2.122L5.385,10.232a2.5,2.5,0,0,0,0,3.536l7.672,7.671A1.5,1.5,0,0,1,12,24Z"/><path d="M21.542,24a1.5,1.5,0,0,1-1.061-.439L11.4,14.475a3.505,3.505,0,0,1,0-4.95L20.481.439A1.5,1.5,0,0,1,22.6,2.561l-9.086,9.085a.5.5,0,0,0,0,.708L22.6,21.439A1.5,1.5,0,0,1,21.542,24Z"/></svg>
                         </div>
@@ -1505,20 +1495,9 @@ export class chat extends HTMLElement {
                         <button id="unblock-btn" class="btn btn-danger"> unblock </button>
                     </div>
                 </div>
-
-            </div>
-        </div>
-
-        <div class="profileOffcanvas d-flex flex-column col-lg-4 col-md-4 col-sm-6 " id="profileOffcanvas">
-            <div class="profile-offcanvas-header">
-                <button type="button" class="btn-close" id="profileOffcanvasCloseBtn"></button>
-            </div>
-            <div class="custom-offcanvas-body"></div>
-        </div>
         <div class="overlay" id="overlay" ></div>
-
-    </body>
-    `
+        </body>
+        `
         )
     }
 }

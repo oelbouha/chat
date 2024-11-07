@@ -79,6 +79,7 @@ export class gameRequest extends HTMLElement {
 					display: flex;
 					flex-direction: column;
 					margin-bottom: 4px;
+					transition: all 0.3s ease;
 				}
 				.invite-message-image-container {
 					width: 50px;
